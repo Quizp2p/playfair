@@ -2,21 +2,22 @@
  "file":
  "/Users/brianzindler/Code/clojure_script/playfair-cljs/out/playfair_cljs/core.js",
  "sources":["core.cljs"],
- "lineCount":52,
+ "lineCount":57,
  "mappings":
- "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",
+ "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",
  "names":
  ["cljs.core/enable-console-print!", "playfair-cljs.core/render-app",
-  "render-app", "app-state", "owner", "playfair-cljs.core/t7798",
+  "render-app", "app-state", "owner", "playfair-cljs.core/t6817",
   "this__4008__auto__", "writer__4009__auto__", "opt__4010__auto__",
-  "cljs.core/-write", "_7800", "meta7799",
-  "playfair-cljs.core/->t7798", "this", "js/React.DOM.div",
+  "cljs.core/-write", "_6819", "meta6818",
+  "playfair-cljs.core/->t6817", "this", "js/React.DOM.div",
   "js/React.DOM.svg", "js/React.DOM.button", "cljs.core/apply",
   "om.dom/div", "om.core/build-all",
   "playfair-cljs.components.step/render-step", "cljs.core/vec",
   "cljs.core/range", "cljs.core/count", "om.dom/svg",
-  "playfair-cljs.components.canvas/canvas-size",
-  "playfair-cljs.components.canvas/render-canvas", "cljs.core/dissoc",
+  "playfair-cljs.shapes/canvas-size",
+  "playfair-cljs.components.canvas/render-canvas",
   "playfair-cljs.components.canvas/get-canvas-state", "om.dom/ul",
   "playfair-cljs.components.commands/render-commands", "om.core/root",
-  "playfair-cljs.appstate/app-state", "js/document"]}
+  "playfair-cljs.appstate/app-state", "js/document",
+  "playfair-cljs.components.canvas/state-maker", "cljs.core/deref"]}

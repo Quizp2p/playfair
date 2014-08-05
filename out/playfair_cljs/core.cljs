@@ -4,7 +4,8 @@
             [playfair-cljs.components.canvas :as canvas]
             [playfair-cljs.appstate :as state]
             [playfair-cljs.components.step :as step]
-            [playfair-cljs.components.commands :as commands]))
+            [playfair-cljs.components.commands :as commands]
+            [playfair-cljs.shapes :as shapes]))
 
 (enable-console-print!)
 
@@ -21,7 +22,7 @@
                      (apply dom/div nil (om/build-all step/render-step (vec (range (count (:steps app-state)))))))
               (dom/div #js {:className "canvas"}
                     (dom/div #js {:id "mainCanvas"}
-                     (apply dom/svg #js {:width (canvas/canvas-size 0) :height (canvas/canvas-size 1)} (om/build-all canvas/render-canvas (vec (dissoc (canvas/get-canvas-state app-state) :text))))))
+                     (apply dom/svg #js {:width (shapes/canvas-size 0) :height (shapes/canvas-size 1)} (om/build-all canvas/render-canvas (:state (canvas/get-canvas-state app-state))))))
               (dom/div #js {:className "commands"}
                        (apply dom/ul nil (om/build-all commands/render-commands (:commands app-state))))))))
 
@@ -34,8 +35,8 @@
   {:target (. js/document (getElementById "app"))})
 
 
+ (canvas/state-maker (:steps @state/app-state))
 
+(:state (canvas/get-canvas-state @state/app-state))
 
-
-
-
+(:text (canvas/get-canvas-state @state/app-state))

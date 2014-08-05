@@ -7,11 +7,20 @@
 ;;Make sure snapping works
 ;;Get snapping text right (Text should probably change to accomadate snapping.)
 
-(def app-state (atom {:steps [(shapes/make-draw :circle [80 90] [90 90])
-                              (shapes/make-for 30 [(partial shapes/make-move :circle0 10 10)
-                                                   (partial shapes/make-draw :rect [:center-node :circle0] [10 10])
-                                                    ])
-                              ]
+
+;;What does make draw do to lookup a snap?
+
+(def app-state (atom {:steps [(shapes/make-draw :circle [:middle-center-node :canvas] [:top-center-node :canvas] :guide {:centered true})
+                              (shapes/make-scale [:circle 0] :top-node .86)
+                              (shapes/make-draw :circle [:middle-left-node :canvas] [16 0] :guide {:centered true})
+                              (shapes/make-draw :line [:center-node [:circle 0]] [:right-node [:circle 0]])
+                              (shapes/make-for 100 [(shapes/make-rotate [:line 0] :first-point 0.02)
+                                                   (shapes/make-draw :line [:last-point [:line 0]] [:right-node [:circle 0]] {} {:vertically true})
+                                                   (shapes/make-move [:line 1] :last-point [:center-node [:circle 1]])
+                                                   (shapes/make-move [:circle 1] 6 0)
+                              ])
+                      ]
+
                       :commands [{:commandName "line" :keypress "x" :className "regular"}
                                  {:commandName "path" :keypress "a" :className "regular"}
                                  {:commandName "rect" :keypress "r" :className "regular"}
@@ -27,5 +36,9 @@
                                  {:commandName "guide" :keypress "g" :className "regular"}
                                  {:commandName "clip" :keypress "k" :className "regular"}]
 
-                      :key-state :select}))
+                      :key-state :select
+
+                      :global {}
+
+                      :data {}}))
 
