@@ -31,6 +31,11 @@
                  :middle-point
                  :last-point])
 
+
+
+(defn make-renderable [{:keys [rect circle line path]}]
+  (vec (flatten (conj [] rect circle line path))) )
+
 (defn rotate-point-around-point [[origin-x origin-y] [x y] rotate-val]
   (let [rotate-angle (* rotate-val (* 2 math/PI))
         r (math/distance-formula [origin-x origin-y] [x y])
@@ -175,47 +180,6 @@
 (defn contain-str [string lookup]
   (>= (.indexOf string lookup) 0))
 
-
-
-
-
-;;Text Functions
-(defn draw-text
-  ([s-name shape-key p1 diffs] (draw-text s-name shape-key p1 diffs [:none :none] [:none :none] {}) )
-  ([s-name shape-key [x y] [diffX diffY] [from-snap-node from-snap-name] [to-snap-node to-snap-name] options]
-  (let [shape (name s-name)
-
-        attrs (vectors-to-attrs shape-key [x y] [(+ x diffX) (+ y diffY)])
-
-        gen-text (str "Draw " (name s-name))
-
-        dec-places 1
-
-        convert-path-attrs (fn [p-attrs]
-                            (let [[x y] (vec (.split (.slice (:d p-attrs) 1) " "))]
-                              {:x x, :y y}))
-
-        rest-end-text (fn [horz vert]
-                        (if (keyword? to-snap-node)
-                        (str " to " (name to-snap-name) "'s " (name to-snap-node))
-                        (str (math/round horz dec-places) "px horizontally " (math/round vert dec-places) "px vertically")))
-        position-text (fn [x y]
-                        (if (keyword? from-snap-node)
-                          (str " at " (name from-snap-name) "'s " (name from-snap-node))
-                          (str " from (" (math/round x dec-places) ", " (math/round y dec-places) ") " )))]
-  (str gen-text (position-text x y) (rest-end-text diffX diffY)))))
-
-
-(defn move-text [moved-shape-key diffX diffY]
-  (str "Move " (name moved-shape-key) " " diffX "px horizontally " diffY "px vertically"))
-
-(defn scale-text [shape-key selected-node scale-val]
-  (str "Scale "  shape-key " around "  shape-key "'s " (name (get-opposite-node selected-node)) " by " scale-val))
-
-
-(defn rotate-text [shape-key selected-node rotate-val]
-  (str "Rotate " (name shape-key) " around " (name shape-key) "'s " (name (get-opposite-node selected-node)) " by " rotate-val))
-
 (defn extend-path-text [p-type shape-name attrs orig-x orig-y]
   (str "Extend " (name shape-name) " with " (if (= p-type :line) (str "line " (- orig-x (:x attrs)) "px horizontally " (- orig-y (:y attrs)) "px vertically") "curve")))
 
@@ -239,11 +203,11 @@
                                  :visual-attrs {:stroke "blue" :strokeWidth 2}
                                  :active false}]))
 
-;;Text still broken. To fix the text I need to know the position of a snapped node.
-;;I think this can only be done by completely reorganizing the way function flows throught the program
-;;This is a strange hack. There is a better way than that let statement.
 
-
+(defn get-snap-name [snap-vec]
+  (if (keyword? snap-vec)
+    (name snap-vec)
+    (str (name (snap-vec 0)) (snap-vec 1))))
 
 (defn center-vector [[x y] [diffX diffY]]
   [[(+ x  diffX) (+ y diffY)] [(- x diffX) (- y diffY)]])
@@ -252,55 +216,324 @@
 (def canvas-nodes
   (get-rect-node-points {:x 0 :y 0 :width (canvas-size 0) :height (canvas-size 1)}))
 
-canvas-nodes
 
+(def shape-keys [:rect :path :circle :line])
 
 (defn make-draw
-  ([shape-key p1 diffs] (make-draw shape-key p1 diffs {}))
-  ([shape-key p1 diffs vis-attrs] (make-draw shape-key p1 diffs vis-attrs {}))
-  ([shape-key [x y] [diffX diffY] vis-attrs options]
-     {:func-name :make-draw
-      :arguments [shape-key [x y] [diffX diffY] vis-attrs options]
-      :func (let []
-           (fn [canvas-state]
-                     (let [check-snapped (fn [s-node? s-name?]
-                                           (if (vector? s-name?)
-                                            (let [[s-key s-index] s-name?]
-                                              (let [{:keys [x y]} (s-node? (:position-attrs ((s-key canvas-state) s-index)))]
-                                                [x y]))
-                                            (if (= s-name? :canvas)
-                                               (let [{:keys [x y]} (s-node? canvas-nodes)]
-                                                 [x y])
-                                               [s-node? s-name?])))
-                           [new-x new-y] (check-snapped x y)
-                           [new-diffX new-diffY] (let [[x2 y2] (check-snapped diffX diffY)]
-                                                   (if (keyword? diffX)
-                                                     [(if (:vertically options) 0 (- x2 new-x))
-                                                      (if (:horizontally options) 0 (- y2 new-y))]
-                                                     [x2 y2]))
-                           ;;debug (debug/log canvas-state)
-                           pos-attrs (if (:centered options)
-                                     (let
-                                       [[[c-x1 c-y1] [c-x2 c-y2]] (center-vector [new-x new-y] [new-diffX new-diffY])]
-                                       (vector-to-nodes shape-key [c-x1 c-y1] [c-x2 c-y2]))
-                                     (vector-to-nodes shape-key [new-x new-y] [(+ new-x new-diffX) (+ new-y new-diffY)]))]
-                   (assoc canvas-state shape-key (conj (shape-key canvas-state)
-                                                       {:shape-name  shape-key,
-                                                        :position-attrs pos-attrs,
-                                                        :visual-attrs (conj {:fill "#1F1E1D", :className "shape" , :stroke "#1F1E1D", :strokeWidth 3} (if (map? vis-attrs)
-                                                                                                                                          vis-attrs
-                                                                                                                                          {:className "guide" :stroke "#225E79" :fill "#3BA3D0" :strokeWidth 2}))
-                                                   :active (:active options)})
-                                        :text (conj (:text canvas-state) (draw-text (keyword (str (name shape-key) (count (shape-key canvas-state)))) shape-key [new-x new-y] [new-diffX new-diffY] [x (if (vector? y)
-                                                                                                                                                                                                         (let [[s-key s-index] y]
-                                                                                                                                                                                                           (str s-key s-index))
-                                                                                                                                                                                                           y)]
-                                                                                                                                                                                                     [diffX (if (vector? diffY)
-                                                                                                                                                                                                                (let [[s-key s-index] diffY]
-                                                                                                                                                                                                                          (str s-key s-index))
-                                                                                                                                                                                                                  diffY)] options)))))
-          )
-        :self make-draw}))
+  ([shape-key [x y] [diffX diffY]] (make-draw shape-key [x y] [diffX diffY] nil))
+  ([shape-key [x y] [diffX diffY] options-vec]
+  (conj {:step-name :draw,
+         :shape shape-key}
+        (zipmap (if (or (vector? y) (= y :canvas))
+                  [:from-node :from-shape]
+                  [:x :y]) [x y])
+        (zipmap (if (or (vector? diffY) (= diffY :canvas))
+                  [:to-node :to-shape]
+                  [:diffX :diffY]) [diffX diffY])
+        (if options-vec
+          (zipmap options-vec (repeat (count options-vec) true))
+          nil))))
+
+
+(defn make-scale [shape-lookup node scale-val]
+  {:step-name :scale,
+   :shape-lookup shape-lookup,
+   :node node,
+   :scale-val scale-val})
+
+(defn make-for [times steps-vec]
+  {:step-name :for,
+   :times times,
+   :for-steps steps-vec})
+
+(defn make-rotate [shape-lookup node rotate-val]
+  {:step-name :rotate
+   :shape-lookup shape-lookup,
+   :node node,
+   :rotate-val rotate-val})
+
+(defn make-move [shape-lookup diffX diffY]
+  (conj {:step-name :move
+         :shape-lookup shape-lookup}
+        (zipmap (if (keyword? diffX)
+                    [:from-node]
+                    [:diffX]) [diffX])
+        (if (vector? diffY)
+            {:to-node (diffY 0) :to-shape (diffY 1)}
+            {:diffY diffY})))
+
+(defn conj-in [x lookup-vec added-val]
+  (assoc-in x lookup-vec (conj (get-in x lookup-vec)
+                               added-val)))
+
+(defn make-draw-cs [canvas-state {:keys [shape from-node from-shape x y to-node to-shape diffX diffY] :as draw-map}]
+              (let [[x y] (if from-node
+                                  (if (keyword? from-shape)
+                                    (let [{:keys [x y]} (from-node canvas-nodes)]
+                                            [x y])
+                                    (let [[from-shape-key from-shape-index] from-shape
+                                          {:keys [x y]} (get-in canvas-state [from-shape-key from-shape-index :position-attrs from-node])]
+                                           [x y]))
+                                  [x y])
+                    [diffX diffY] (if to-node
+                                      (if (keyword? to-shape)
+                                          (let [{:keys [x y]} (to-node canvas-nodes)]
+                                            [x y])
+                                          (let [[to-shape-key to-shape-index] to-shape
+                                                to-point (get-in canvas-state [to-shape-key to-shape-index :position-attrs to-node])]
+                                                  [(if (:vertically draw-map)
+                                                        0
+                                                        (- (:x to-point) x)),
+                                                   (if (:horizontally draw-map)
+                                                        0
+                                                        (- (:y to-point) y))]))
+                                    [diffX diffY])
+                    pos-attrs (if (:centered draw-map)
+                                (vector-to-nodes shape [(+ x  diffX) (+ y diffY)] [(- x diffX) (- y diffY)])
+                                (vector-to-nodes shape [x y] [(+ x diffX) (+ y diffY)]))]
+
+                (conj-in canvas-state [shape] {:shape-name  shape,
+                                               :position-attrs pos-attrs,
+                                               :visual-attrs (conj {:fill "#1F1E1D", :className "shape", :stroke "#1F1E1D", :strokeWidth 3}
+                                                                            (if (:guide draw-map)
+                                                                                {:className "guide" :stroke "#225E79" :fill "#3BA3D0" :strokeWidth 2}
+                                                                                (:vis-attrs draw-map)))
+                                               :active (:active draw-map)})))
+
+(defn draw-text [{:keys [shape from-node from-shape x y to-node to-shape diffX diffY]}]
+  (let [dec-places 1]
+  (str "Draw " (name shape)
+               (if from-node
+                  (str " at " (get-snap-name from-shape) "'s " (name from-node) " ")
+                  (str " from (" (math/round x dec-places) ", " (math/round y dec-places) ") " ))
+               (if to-node
+                  (str "to " (get-snap-name to-shape) "'s " (name to-node))
+                  (str (math/round diffX dec-places) "px horizontally " (math/round diffY dec-places) "px vertically")))))
+
+
+(defn make-scale-cs [canvas-state {:keys [step-name shape-lookup node scale-val]}]
+      (let [[shape-key shape-index] shape-lookup
+            shape-map ((shape-key canvas-state) shape-index)
+            {:keys [shape-name] :as shape} (assoc-in shape-map [:position-attrs] (nodes-to-attrs shape-key (:position-attrs shape-map)))
+                   ;;debug (debug/log scaled-canvas-state)
+                   ]
+                   (shape-name {:rect (assoc-in canvas-state [shape-key shape-index :position-attrs] (scale-rect node shape scale-val))
+                                :circle (assoc-in canvas-state [shape-key shape-index :position-attrs] (scale-circle node shape scale-val))
+                                :line (assoc-in canvas-state [shape-key shape-index :position-attrs] (scale-line node shape scale-val))})))
+
+(defn scale-text [{:keys [step-name shape-lookup node scale-val]}]
+  (let [[shape-key shape-index] shape-lookup]
+    (str "Scale " (get-snap-name [shape-key shape-index]) " around "  (get-snap-name [shape-key shape-index]) "'s "
+         (name (get-opposite-node node)) " by " scale-val)))
+
+
+(defn make-rotate-cs [canvas-state {:keys [shape-lookup node rotate-val]}]
+        (let [[shape-key index] shape-lookup
+              rotated-canvas-state (assoc-in canvas-state [shape-key index :position-attrs]
+                                             (reduce (fn [accum [node-name node-pos]]
+                                                     (let [shape-pos (:position-attrs ((shape-key canvas-state) index))
+                                                           [new-x new-y] (rotate-point-around-point [(:x (node shape-pos)) (:y (node shape-pos))]
+                                                                                                    [(:x  node-pos) (:y node-pos)] rotate-val)]
+                                                    (assoc accum node-name {:x new-x :y new-y}))) {} (vec (get-in canvas-state [shape-key index :position-attrs]))))]
+                     rotated-canvas-state))
+
+(defn rotate-text [{:keys [shape-lookup node rotate-val]}]
+  (let [[shape-key index] shape-lookup]
+    (str "Rotate " (get-snap-name [shape-key index])
+         " around " (get-snap-name [shape-key index] ) "'s " (name (get-opposite-node node)) " by " rotate-val)))
+
+
+;;Rewrite Move. Something is wrong.
+
+(make-move [:line 1] :last-point [:center-node [:circle 1]])
+(defn make-move-cs [canvas-state {:keys [shape-lookup from-node to-node to-shape diffX diffY]}]
+  (let [[shape-key index] shape-lookup
+        {:keys [position-attrs shape-name]} ((shape-key canvas-state) index)
+                     [diffX diffY] (if to-node
+                                     (let [moved-node-pos (from-node position-attrs)
+                                           [to-shape-key to-index] to-shape
+                                           snapped-shape-pos (to-node (:position-attrs ((to-shape-key canvas-state) to-index)))]
+                                       [(- (:x snapped-shape-pos) (:x moved-node-pos))
+                                        (- (:y snapped-shape-pos) (:y moved-node-pos))])
+                                       [diffX diffY])
+                     shape-pos-attrs (nodes-to-attrs shape-name position-attrs)
+                     positions (reduce conj (map (fn [pos-attr]
+                                                     (cond (> (.indexOf (str pos-attr) "x") 0) {pos-attr (+ (pos-attr shape-pos-attrs) diffX)}
+                                                           (> (.indexOf (str pos-attr) "y") 0) {pos-attr (+ (pos-attr shape-pos-attrs) diffY)})) (get-pos-key shape-name)))]
+    (assoc-in canvas-state [shape-key index :position-attrs] (attrs-to-nodes shape-key (conj shape-pos-attrs positions)))))
+
+
+(defn move-text [{:keys [shape-lookup from-node to-node to-shape diffX diffY]}]
+    (str "Move " (get-snap-name shape-lookup) (if diffX
+                                                       (str " " diffX "px horizontally " diffY "px vertically")
+                                                       (str "'s " (name from-node) " to " (get-snap-name to-shape) "'s " (name to-node)))))
+
+
+(defn for-state-maker [for-steps state]
+  (loop [for-steps for-steps
+         loop-state state
+         inner-draws {:rect [],
+                      :path [],
+                      :circle [],
+                      :line []}
+         new-canvas-state []
+         new-for-steps []]
+      (if for-steps
+       (let [{:keys [step-name] :as step} (first for-steps)
+             new-state (((step-name step-func-dictionary) 0) loop-state step)
+             step-text (((step-name step-func-dictionary) 1) step) ]
+          (if (= step-name :draw)
+                  (let
+                    [shape-name (:shape step)
+                     shape-index (count (shape-name loop-state))]
+                     (recur (next for-steps)
+                            new-state
+                            (conj-in inner-draws [shape-name] shape-index)
+                            (conj new-canvas-state [new-state step-text])
+                            (conj new-for-steps step)))
+
+                  (let [[adjusted-shape-key adjusted-shape-index] (:shape-lookup step)]
+                   (if (> (count (filterv (fn [a]
+                                  (= a adjusted-shape-index)) (adjusted-shape-key inner-draws))) 0)
+                    (let [new-step (assoc-in step [:shape-lookup 1] (inc adjusted-shape-index))]
+                                    (recur (next for-steps)
+                                            new-state
+                                            inner-draws
+                                            (conj new-canvas-state [new-state step-text])
+                                            (conj new-for-steps new-step)))
+                    (recur (next for-steps)
+                           new-state
+                           inner-draws
+                           (conj new-canvas-state [new-state step-text])
+                           (conj new-for-steps step))))))
+        {:loop-state loop-state, :new-for-steps new-for-steps, :new-cs new-canvas-state})))
+
+(make-draw :rect [:top-node [:circle 0]] [4 5])
+(make-draw :line [:last-point [:line 0]] [:right-node [:circle 0]] [:vertically])
+
+
+
+(vec (repeat 4 ["test" "best"]))
+
+(def shape-lookup-vars {:draw [:from-shape :to-shape]
+                        :scale [:shape-lookup]
+                        :move [:shape-lookup :to-shape]
+                        :rotate [:shape-lookup]})
+
+(defn get-cs-count [cs]
+  (reduce (fn [accum [s-key s-vec]]
+          (assoc accum s-key (count s-vec))) {} cs))
+
+(defn check-for-step [loop-ind canvas-state]
+  (let [cs-with-count (get-cs-count canvas-state)]
+    (fn [{:keys [step-name] :as step}]
+      (reduce (fn [alt-step l-var]
+                  (if (l-var alt-step)
+                      (let [[s-name s-ind] (l-var alt-step)]
+                                      (if (<= (s-name cs-with-count) s-ind)
+                                        (assoc alt-step l-var [s-name (+ s-ind loop-ind)])
+                                        alt-step)) alt-step)) step (step-name shape-lookup-vars)))))
+
+(defn unwrap-for-step [{:keys [times for-steps]} canvas-state]
+  (let [expanded-f-steps (vec (repeat times for-steps))]
+    (vec (map-indexed (fn [loop-ind for-loop]
+                   (vec (map (check-for-step loop-ind canvas-state) for-loop))) expanded-f-steps))))
+
+
+
+
+
+
+(defn make-for-cs [canvas-state {:keys [times for-steps]}]
+                                       (loop [state canvas-state
+                                              loops times
+                                              for-steps for-steps
+                                              all-steps-outer []]
+                                         (if (<= loops 0)
+                                           all-steps-outer
+                                           (let [{:keys [loop-state new-for-steps new-cs]} (for-state-maker for-steps state)]
+                                             (recur loop-state (dec loops) new-for-steps (conj all-steps-outer new-cs))))))
+
+(defn for-text [{:keys [times for-steps]}]
+  (str "Repeat from 1 to " (+ times 1)))
+
+
+(def cs {:rect [] :circle []
+         :path [] :line []})
+
+
+(def step-func-dictionary {:draw [make-draw-cs draw-text]
+                           :scale [make-scale-cs scale-text]
+                           :rotate [make-rotate-cs rotate-text]
+                           :move [make-move-cs move-text]
+                           :for [make-for-cs for-text]})
+
+(defn add-active-for [for-steps pre-for-index check-index]
+         (loop [cs-steps for-steps,
+                index pre-for-index,
+                processed-cs-steps [],
+                active-section 0]
+           (if cs-steps
+             (let [{:keys [inner-cs-steps inner-index active-section]} (reduce (fn [{:keys [inner-index inner-cs-steps active-section]} cs-step]
+                                                                           {:inner-index (inc inner-index)
+                                                                             :inner-cs-steps (conj inner-cs-steps (conj cs-step (check-index inner-index)))
+                                                                             :active-section (if (check-index inner-index)
+                                                                                                 (.floor js/Math (/ (- inner-index pre-for-index) (count (first for-steps))))
+                                                                                                 active-section)})
+                                                                         {:inner-index index :inner-cs-steps [] :active-section active-section}
+                                                                         (first cs-steps))]
+             (recur (next cs-steps) inner-index (conj processed-cs-steps inner-cs-steps) active-section))
+             {:processed-cs-steps (processed-cs-steps active-section) :index index :final-step (last (last processed-cs-steps))})))
+
+(def data-variables {:rotate [:rotate-val]
+                        :draw [:x :y :diffX :diffY]
+                        :scale [:scale-val]
+                        :for [:times]
+                        :move [:diffX :diffY]})
+
+(defn check-data [step-map data loop-index]
+  (let [data-vars ((:step-name step-map) data-variables)]
+     (reduce (fn [new-step-map [step-key step-val]]
+               (assoc new-step-map step-key (if (and (some (fn [d-val] (= step-key d-val)) data-vars) (keyword? step-val))
+                                              (if (vector? (step-val data))
+                                                ((step-val data) loop-index)
+                                                (step-val data))
+                                              step-val))) {} step-map)))
+
+
+
+(defn for-state-maker2 [exp-for-steps data cs]
+  (loop [cs cs
+         loops exp-for-steps
+         state []
+         loop-index 0]
+    (if loops
+      (let [inner-l-s (reduce (fn [accum {:keys [step-name] :as step}]
+                                (let [[state-maker text-maker] (step-name step-func-dictionary)
+                                      data-checked-step (check-data step data loop-index)
+                                      last-cs (if (= (count accum) 0) cs ((last accum) 0))]
+                                  (conj accum [(state-maker last-cs data-checked-step) (text-maker step)]))) [] (first loops))]
+        (recur ((last inner-l-s) 0) (next loops) (conj state inner-l-s) (inc loop-index)))
+      state)))
+
+
+(defn steps-to-app-state [{:keys [steps active-steps data]}]
+  (let [func-lookup step-func-dictionary
+        active-step-range (range (active-steps 0) (inc (active-steps 1)))]
+    (:app-state (reduce (fn [{:keys [app-state canvas-state index]} {:keys [step-name] :as step}]
+                            (let [[state-maker text-maker] (step-name func-lookup)
+                                  check-index (fn [dex] (some (fn [x] (= dex x)) active-step-range))]
+                                  (if (= step-name :for)
+                                      (let [state (state-maker canvas-state step)
+                                            ;;Get the for loop working - (fn that takes index in loop returns val)
+                                            {:keys [processed-cs-steps index final-step]} (add-active-for state index check-index)]
+                                         {:app-state (conj app-state {:name :for :steps processed-cs-steps :text (text-maker step) :final-step final-step})
+                                          :canvas-state (first final-step)
+                                          :index (inc index)})
+                                      (let [state (state-maker canvas-state (check-data step data)) ]
+                                       {:app-state (conj app-state [state (text-maker step) (check-index index)])
+                                       :canvas-state state
+                                       :index (inc index)}) ))) {:app-state [] :canvas-state cs :index 0} steps))))
 
 
 
@@ -315,170 +548,5 @@ canvas-nodes
                  canvas-with-ext-p (assoc-in canvas-state [:path path-index :position-attrs]  (conj line-arr point))]
              (assoc canvas-with-ext-p :text (conj (:text canvas-with-ext-p) (extend-path-text p-type (str :path path-index) new-attrs (:x last-point) (:y last-point))))))
   :self extend-path})
-
-
-;;Adjust Functions
-;;There is some construct that will help here. polymorphism or whatever?
-
-;;Start here and go down.
-
-(defn make-move [[shape-key index] diffX diffY]
-  {:func-name :make-move
-   :arguments [[shape-key index] diffX diffY]
-   :func (let [moved-node-key diffX
-              [snapped-node-key [snapped-shape-key snapped-shape-index]] (if (keyword? diffX) diffY [nil [nil nil]])]
-      (fn [canvas-state]
-               (let [{:keys [position-attrs shape-name]} ((shape-key canvas-state) index)
-                     moved-node-pos (if (keyword? diffX) (moved-node-key position-attrs)
-                                      nil)
-                     snapped-shape-pos (if (keyword? diffX)
-                                         (snapped-node-key (:position-attrs ((snapped-shape-key canvas-state) snapped-shape-index)))
-                                         nil)
-                     diffX (if (keyword? snapped-shape-key)
-                             (- (:x snapped-shape-pos) (:x moved-node-pos))
-                             diffX)
-                     diffY (if (keyword? snapped-shape-key)
-                             (- (:y snapped-shape-pos) (:y moved-node-pos))
-                             diffY)
-                     shape-pos-attrs (nodes-to-attrs shape-name position-attrs)
-                     positions (reduce conj (map (fn [pos-attr]
-                                                     (cond (> (.indexOf (str pos-attr) "x") 0) {pos-attr (+ (pos-attr shape-pos-attrs) diffX)}
-                                                           (> (.indexOf (str pos-attr) "y") 0) {pos-attr (+ (pos-attr shape-pos-attrs) diffY)})) (get-pos-key shape-name)))
-                     moved-canvas-state (assoc-in canvas-state [shape-key index :position-attrs] (attrs-to-nodes shape-key (conj shape-pos-attrs positions)))]
-                     (assoc moved-canvas-state :text (conj (:text moved-canvas-state) (move-text (str shape-key index) diffX diffY))))))
-   :self make-move})
-
-(defn make-scale [[shape-key index] selected-node scale-val]
-  {:func-name :make-scale
-   :arguments [[shape-key index] selected-node scale-val]
-   :func (fn [canvas-state]
-             (let [{:keys [shape-name] :as shape} (assoc-in ((shape-key canvas-state) index) [:position-attrs] (nodes-to-attrs shape-key (:position-attrs ((shape-key canvas-state) index))))
-                   scaled-canvas-state (shape-name {:rect (assoc-in canvas-state [shape-key index :position-attrs] (scale-rect selected-node shape scale-val))
-                                                    :circle (assoc-in canvas-state [shape-key index :position-attrs] (scale-circle selected-node shape scale-val))
-                                                    :line (assoc-in canvas-state [shape-key index :position-attrs] (scale-line selected-node shape scale-val))})
-                   ;;debug (debug/log scaled-canvas-state)
-                   ]
-
-               (assoc scaled-canvas-state :text (conj (:text scaled-canvas-state) (scale-text (str shape-key index) selected-node scale-val))) ))
-   :self make-scale})
-
-
-
-
-
-(defn make-rotate [[shape-key index] selected-node rotate-val]
-            {:func-name :make-rotate
-             :arguments [[shape-key index] selected-node rotate-val]
-             :func (fn [canvas-state]
-                   (let [rotated-canvas-state (assoc-in canvas-state [shape-key index :position-attrs] (reduce (fn [accum [node-name node-pos]]
-                                                                                                           (let [shape-pos (:position-attrs ((shape-key canvas-state) index))
-                                                                                                                 [new-x new-y] (rotate-point-around-point [(:x (selected-node shape-pos)) (:y (selected-node shape-pos))]
-                                                                                                                                                         [(:x  node-pos) (:y node-pos)] rotate-val)]
-                                                                                                           (assoc accum node-name {:x new-x :y new-y}))) {} (vec (:position-attrs ((shape-key canvas-state) index) ))))]
-                     (assoc rotated-canvas-state :text (conj (:text rotated-canvas-state) (rotate-text (str shape-key index) selected-node rotate-val)))))
-             :self make-rotate})
-
-
-;;Input format [:new-arg arg-num]
-
-(defn replace-args [{:keys [arguments self]} & replace-vecs]
-  (apply self (reduce (fn [args [index new-val]]
-                  (assoc args index new-val)) arguments replace-vecs)))
-
-;;If both the creation, and alteration of a shape are in for loop. The alteration will need updating
-;; Ideas:
-;; Hava an array in the loop that captures the keys of shapes made in the loop. Then each other action checks its against it.
-;; What if they are put into a map? That would be more efficient
-
-;;Make draw and make draw vec need to be combined.
-
-;;Damn son if this works I'm proud.
-
-;;Works beter with actual recursion because I will need to change the funcmaps
-
-;;I must learn regular expressions.
-
-(defn cljs-join [string]
-  (reduce (fn [joined c]
-          (str joined c)) "" string))
-
-
-(defn split-str-at [string func]
-              (loop [[first-char & rest-chars] (seq string)
-                     split-strs ""]
-                  (if (func first-char)
-                    [split-strs (str first-char (cljs-join rest-chars))]
-                    (if rest-chars
-                      (recur rest-chars (str split-strs first-char))
-                      [split-strs ""]))))
-
-
-(defn for-state-maker [func-maps state all-state]
-  (loop [evaled-func-maps func-maps
-         loop-state state
-         inner-draws {:rect [],
-                      :path [],
-                      :circle [],
-                      :line []}
-         new-func-maps []
-         all-states-vec all-state]
-      (if evaled-func-maps
-       (let [{:keys [func func-name arguments] :as func-map} (first evaled-func-maps)]
-          (if (or (= func-name :make-draw)
-                  (= func-name :make-draw-vec))
-                  (let
-                    [shape-name (arguments 0)
-                     shape-index (count (shape-name loop-state))
-                     new-state (func loop-state)]
-                      (recur (next evaled-func-maps) new-state
-                             (assoc inner-draws shape-name (conj (shape-name inner-draws) shape-index))
-                             (conj new-func-maps func-map)
-                             (conj all-states-vec new-state)))
-
-                  (let [[[adjusted-shape-key adjusted-shape-index]] arguments]
-                   (if (> (count (filterv (fn [a]
-                                  (= a adjusted-shape-index)) (adjusted-shape-key inner-draws))) 0)
-                    (let [replaced-func-map (replace-args func-map [0 [adjusted-shape-key (inc adjusted-shape-index)]])
-                          new-state (func loop-state)]
-                                               (recur (next evaled-func-maps)
-                                                      new-state
-                                                      inner-draws
-                                                      (conj new-func-maps replaced-func-map)
-                                                      (conj all-states-vec new-state)))
-                    (recur (next evaled-func-maps)
-                           (func loop-state)
-                           inner-draws
-                           (conj new-func-maps func-map)
-                           (conj all-states-vec (func loop-state)))))))
-
-        {:loop-state loop-state, :func-maps new-func-maps, :all-states all-states-vec})))
-
-
-(defn make-for ([times func-maps] (make-for times func-maps (- (* (count func-maps) times) 1)))
-  ([times func-maps all-index] {:func-name :make-for
-                            :arguments [times func-maps]
-                            :func  (fn [canvas-state]
-                                       (loop [state canvas-state
-                                              loops times
-                                              inner-func-maps func-maps
-                                              all-states-outer []]
-                                         (if (<= loops 0)
-                                           (all-states-outer all-index)
-                                           (let [{:keys [loop-state func-maps all-states]} (for-state-maker inner-func-maps state all-states-outer)]
-                                             (recur loop-state (dec loops) func-maps all-states)))))}))
-
-
-
-;;State makers only job is to take what its got and make the statement.
-;;The func maps provides will be garunteed good...
-
-(defn make-duplicate [selected-node diffX diffY]
-  (fn [canvas-state]
-    canvas-state))
-
-
-
-
-
 
 

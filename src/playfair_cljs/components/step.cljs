@@ -6,13 +6,20 @@
             [playfair-cljs.appstate :as state]
             [playfair-cljs.shapes :as shapes]))
 
-(defn render-step [step-num owner]
+(defn render-step [step owner]
   (reify om/IRender
     (render [this]
-            (let [canvas-state (canvas/get-canvas-state @state/app-state (+ step-num 1))]
-              (dom/div #js {:className "stepContainer"}
-                    (dom/p #js {:className "stepText"} (last (:text canvas-state)))
-                    (apply dom/svg #js {:width 100 :height 100 :viewBox (str "0 0 " (shapes/canvas-size 0) " " (shapes/canvas-size 1))  :className "stepSVG"}
-                           (om/build-all canvas/render-canvas (:state canvas-state))))))))
+                (if (map? step)
+                      (let [{:keys [steps text]} step]
+                        (dom/div #js {:className "largeContainer"}
+                          (dom/p #js {:className "specialText"} text)
+                          (apply dom/div nil (om/build-all render-step steps))
+                                 ))
+                      (let [[cs text active?] step]
+                       (dom/div #js {:className (if active? "activeStepContainer" "stepContainer") }
+                        (dom/p #js {:className "stepText"} text)
+                        (apply dom/svg #js {:width 100 :height 100 :viewBox (str "0 0 " (shapes/canvas-size 0) " " (shapes/canvas-size 1))  :className "stepSVG"}
+                                 (om/build-all canvas/render-canvas (shapes/make-renderable cs)))))))))
 
 
+;; Couple ifs.

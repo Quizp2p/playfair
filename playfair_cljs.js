@@ -10,4 +10,4 @@ goog.addDependency("../playfair_cljs/components/canvas.js", ['playfair_cljs.comp
 goog.addDependency("../playfair_cljs/appstate.js", ['playfair_cljs.appstate'], ['cljs.core', 'playfair_cljs.shapes']);
 goog.addDependency("../playfair_cljs/components/step.js", ['playfair_cljs.components.step'], ['playfair_cljs.components.canvas', 'cljs.core', 'om.core', 'playfair_cljs.shapes', 'om.dom', 'playfair_cljs.debug', 'playfair_cljs.appstate']);
 goog.addDependency("../playfair_cljs/components/commands.js", ['playfair_cljs.components.commands'], ['cljs.core', 'om.core', 'om.dom']);
-goog.addDependency("../playfair_cljs/core.js", ['playfair_cljs.core'], ['playfair_cljs.components.canvas', 'cljs.core', 'playfair_cljs.components.step', 'om.core', 'playfair_cljs.shapes', 'om.dom', 'playfair_cljs.appstate', 'playfair_cljs.components.commands']);
+goog.addDependency("../playfair_cljs/core.js", ['playfair_cljs.core'], ['playfair_cljs.components.canvas', 'cljs.core', 'playfair_cljs.components.step', 'om.core', 'playfair_cljs.shapes', 'om.dom', 'playfair_cljs.debug', 'playfair_cljs.appstate', 'playfair_cljs.components.commands']);

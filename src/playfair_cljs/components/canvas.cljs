@@ -41,46 +41,17 @@
 ;;These 3 things should have different names.
 
 
-(defn state-maker [steps]
-  (reduce (fn [accum step]
-        ((:func step) accum)) {:rect [] :circle []
-                               :path [] :line [] :text []} steps))
-;;Use for instaed of reduce
-;; Here I seem to need to know the number of args - for for - I need t
-
-;;Can the state just be []
-
-;;What I'm doing with text is inelegant
-
-(defn get-canvas-state
-  ([app-state] (get-canvas-state app-state (count (:steps app-state))))
-  ([app-state num-steps]
-   (let [{:keys [rect circle path
-                 line text]} (state-maker (subvec (:steps app-state) 0 num-steps))
-         canvas-state (flatten (conj rect circle path line))
-         keyState (:key-state app-state)
-         new-canvas-state (if (or (= :move keyState) (= :draw keyState))
-                             (create-nodes canvas-state)
-                             canvas-state)
-
-         cs-line-point-check (reduce (fn [accum {:keys [position-attrs shape-name] :as shape-map}]
-                               (if (= shape-name :path)
-                                 (conj accum (if (= (count position-attrs) 1)
-                                               (shapes/line-point-func (:x (position-attrs 0)) (:y (position-attrs 0)))
-                                               shape-map))
-                                 (conj accum shape-map))) [] new-canvas-state)]
-         {:state cs-line-point-check :text text})))
-
-
-
-(defn render-canvas [{:keys [position-attrs shape-name visual-attrs]} owner]
+(defn render-canvas [{:keys [shape-name position-attrs visual-attrs] :as shape} owner]
   (let [shape-attrs (clj->js (conj (shapes/nodes-to-attrs shape-name position-attrs) visual-attrs))]
     (reify om/IRender
-    (render [this]
-         (shape-name {:rect (dom/rect shape-attrs nil)
-                      :circle (dom/circle shape-attrs nil)
-                      :line (dom/line shape-attrs nil)
-                      :path (dom/path shape-attrs nil)})))))
+      (render [this]
+           (shape-name {:rect (dom/rect shape-attrs nil)
+                        :circle (dom/circle shape-attrs nil)
+                        :line (dom/line shape-attrs nil)
+                        :path (dom/path shape-attrs nil)})))))
+
+
+
 
 
 
