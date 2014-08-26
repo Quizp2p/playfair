@@ -70,7 +70,7 @@ ul {
 }
 
 .shape {
-    opacity: 0.3;
+    opacity: 0.6;
 }
 
 .screens {
@@ -120,6 +120,10 @@ ul {
 .activeStepContainer {
   background-color: #6A90D2;
   height: 110px;
+}
+
+.keypress {
+  background-color: #FF7D02;
 }
 
 

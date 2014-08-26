@@ -31,3 +31,6 @@
 
 (defn midpoint-formula [[x1 y1] [x2 y2]]
   [(/ (+ x1 x2) 2) (/ (+ y1 y2) 2)])
+
+(defn map-midpoint-formula [p1 p2]
+  {:x (/ (+ (:x p1) (:x p2)) 2) :y (/ (+ (:y p1) (:y p2)) 2)})

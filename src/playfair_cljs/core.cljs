@@ -14,14 +14,14 @@
 (defn get-last-state
   ([ls] (get-last-state ls false))
   ([ls text?]
-   (let [index (if text? 1 0)]
+   (if ls
+     (let [index (if text? 1 0)]
      (if (map? ls)
       ((:final-step ls) index)
-      (ls index)))))
-
-(pr-str {:red "blue"})
-
-(vec {:red "blue" :pink "time"})
+      (ls index)))
+      (if text?
+        ""
+        shapes/cs))))
 
 (defn render-data [[key-name value] owner]
   (reify
