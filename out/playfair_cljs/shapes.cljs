@@ -1,15 +1,26 @@
 (ns playfair-cljs.shapes
   (:require [playfair-cljs.debug :as debug]
+            [cljs.core.async :refer [put! chan <!]]
             [playfair-cljs.math :as math]
-            [cljs.reader :as reader]))
+            [cljs.reader :as reader]
+            [playfair-cljs.appstate :as state]))
+
+
+;;Channels
+
+(def canvas-chan (chan))
+
 
 (def canvas-size [500 500])
+
+
+
 
 (defn get-pos-key [shape-name]
    (shape-name {:rect [:x :y]
                 :path [:x :y]
                 :line [:x1 :y1 :x2 :y2]
-                :circle [:cx :cy]}) )
+                :circle [:cx :cy]}))
 
 (def rect-nodes [:bottom-right-node
                  :middle-right-node
@@ -31,12 +42,31 @@
                  :middle-point
                  :last-point])
 
+
+
+
+
 (defn check-snap [thing]
   (or (= thing :canvas) (if (and (vector? thing) (> (count thing) 0)) (some (fn [x] (= x (thing 0))) [:rect :path :line :circle]) false)))
 
 
 (defn make-renderable [{:keys [rect circle line path]}]
-  (vec (flatten (conj [] rect circle line path))) )
+  (vec (flatten (conj [] rect circle line path))))
+
+
+
+(def regular-node-vis
+  {:className "reg-node" :stroke "#225E79" :fill "gray" :strokeWidth 2})
+
+(def active-node-vis
+  {:className "reg-node" :stroke "#225E79" :fill "blue" :strokeWidth 2})
+
+(def snap-node-vis
+  {:className "active-node" :stroke "#225E79" :fill "#FFD035" :strokeWidth 2})
+
+
+
+
 
 (defn rotate-point-around-point [[origin-x origin-y] [x y] rotate-val]
   (let [rotate-angle (* rotate-val (* 2 math/PI))
@@ -136,6 +166,33 @@
                 :left-node :right-node}))
 
 
+
+(def node-radius 5)
+
+(defn make-node [x y n-name vis-attrs shape-lookup from-node]
+  {:shape-name :circle
+   :position-attrs (attrs-to-nodes :circle {:cx x :cy y :r node-radius})
+   :visual-attrs (assoc vis-attrs :onMouseDown #(put! canvas-chan {:e-type :mouseDown, :e (.-nativeEvent %), :reciever :node, :shape-lookup shape-lookup :from-node from-node}))
+   :active nil})
+
+
+
+(defn add-nodes [shape vis-attr shape-lookup]
+ (conj (map (fn [[node-name {:keys [x y]}]]
+                    (make-node x y node-name vis-attr shape-lookup node-name)) (:position-attrs shape)) shape))
+
+(defn check-nodes [cs key-state]
+  (reduce concat (reduce concat (map (fn [[shape-name shape-vec]]
+                                          (map-indexed (fn [index shape]
+                                                         (if (and (= :select key-state) (not (:in-progress? @state/gui-state)))
+                                                                 (if (:active shape)
+                                                                     (add-nodes shape regular-node-vis [shape-name index])
+                                                                     (list shape))
+                                                                 (if (:active shape)
+                                                                     (add-nodes shape active-node-vis [shape-name index])
+                                                                     (add-nodes shape snap-node-vis [shape-name index])))) shape-vec)) cs))))
+
+
 ;;Scale Functions
 
 (defn scale-rect [node-name shape scale-val]
@@ -169,18 +226,8 @@
     {(get-opposite-node clicked-node) around-p, clicked-node s-opp-p, :middle-point (math/map-midpoint-formula around-p s-opp-p)}))
 
 
-
-
-
-
-
-
 (defn contain-str [string lookup]
   (>= (.indexOf string lookup) 0))
-
-(defn extend-path-text [p-type shape-name attrs orig-x orig-y]
-  (str "Extend " (name shape-name) " with " (if (= p-type :line) (str "line " (- orig-x (:x attrs)) "px horizontally " (- orig-y (:y attrs)) "px vertically") "curve")))
-
 
 (defn canvas-state-to-nodes [canvas-state [shape-key index]]
   (let [{:keys [shape-name position-attrs]} ((shape-key canvas-state) index)]
@@ -214,6 +261,8 @@
 
 (def canvas-nodes
   (get-rect-node-points {:x 0 :y 0 :width (canvas-size 0) :height (canvas-size 1)}))
+
+
 
 
 (def shape-keys [:rect :path :circle :line])
@@ -257,21 +306,24 @@
 
 
 (defn glomp [s-key pos-attrs g-val]
-  (s-key {:rect (let [{:keys [top-left-node top-right-node
+   (cond
+          (= :rect s-key) (let [{:keys [top-left-node top-right-node
                               bottom-right-node bottom-left-node]} pos-attrs
                       points-vec (map (fn [{:keys [x y]}] [x y]) [top-left-node top-right-node
                                                                   bottom-right-node bottom-left-node])]
                      (segment-glomper (make-seg-vecs points-vec) g-val))
-          :line (glomp-line pos-attrs g-val)
-          :path (segment-glomper (make-seg-vecs (map (fn [[t x y]] [x y]) pos-attrs)) g-val)
-          :circle (let [r (:r (nodes-to-attrs :circle pos-attrs))
+          (= :line s-key) (glomp-line pos-attrs g-val)
+          (= :path s-key) (segment-glomper (make-seg-vecs (map (fn [[t x y]] [x y]) pos-attrs)) g-val)
+          (= :circle s-key) (let [r (:r (nodes-to-attrs :circle pos-attrs))
                         radian (* (* math/PI 2) g-val)]
-                    {:x (* (math/cos radian) r) :y (* (math/sin radian) r)})}))
+                    {:x (* (math/cos radian) r) :y (* (math/sin radian) r)})))
 
 (defn snap [cs node s-lookup]
  (let [{:keys [x y]} (cond
-                       (number? node) 0
-                       (= :canvas s-lookup) (node canvas-nodes)
+                       (= :canvas s-lookup) (if (number? node)
+                                              (glomp :rect canvas-nodes node)
+                                              (node canvas-nodes))
+                       (number? node) (glomp (s-lookup 0) (get-in cs [(s-lookup 0) (s-lookup 1) :position-attrs]) node)
                        :else (let [[s-key s-index] s-lookup]
                                (get-in cs [s-key s-index :position-attrs node])))]
    [x y]))
@@ -309,8 +361,9 @@
    :node node,
    :rotate-val rotate-val})
 
-(defn make-move [shape-lookup diffX diffY]
+(defn make-move [from-node shape-lookup diffX diffY]
   (conj {:step-name :move
+         :from-node from-node
          :shape-lookup shape-lookup}
         (zipmap (if (check-snap diffY)
                     [:from-node]
@@ -388,13 +441,17 @@
                                              :active (:active s-path)}))
 
 (defn extend-path-cs [canvas-state {:keys [path-index p-type x y to-shape to-node]}]
-
   (conj-in canvas-state [:path path-index :position-attrs] (if to-shape
-                                                             (let [[shape-key shape-index] to-shape
-                                                                   s-point (get-in canvas-state [shape-key shape-index :position-attrs to-node])]
-                                                               [p-type (:x s-point) (:y s-point)])
+                                                             (let [[x y] (snap canvas-state to-node to-shape)]
+                                                                   [p-type x y])
                                                              [p-type x y])))
 
+
+
+(defn s-lookup-txt [s-lookup]
+  (if (= :canvas s-lookup)
+    "canvas"
+    (str (name (s-lookup 0))  (s-lookup 1))))
 
 (defn draw-text [{:keys [shape from-node from-shape x y to-node to-shape diffX diffY]}]
   (let [dec-places 1]
@@ -449,8 +506,10 @@
                     "H" "horizontal line"
                     "V" "vertical line"
                     "C" "cubic Bézier"}]
-    (str "Extend path" path-index  " with " (get p-t-lookup p-type) (if to-shape (str " to " (name (to-shape 0)) (to-shape 1) "'s " (name to-node) )
-                                                                             (str x "px horizontally " y "px vertically")))))
+    (str "Extend path" path-index  " with " (get p-t-lookup p-type) (cond
+                                                                     (and to-shape (number? to-node)) (str " to " to-node " along " (s-lookup-txt to-shape))
+                                                                     to-shape (str " to " (s-lookup-txt to-shape) "'s " (name to-node))
+                                                                     :else    (str x "px horizontally " y "px vertically")))))
 
 (defn make-move-cs [canvas-state {:keys [shape-lookup from-node to-node to-shape diffX diffY]}]
   (let [[shape-key index] shape-lookup
@@ -592,7 +651,27 @@
                                        :canvas-state state
                                        :index (inc index)}) ))) {:app-state [] :canvas-state cs :index 0} steps))))
 
+(defn count-all-steps [steps]
+ (reduce (fn [accum {:keys [step-name] :as step}]
+           (if (= step-name :for)
+               (+ accum (* (count (:for-steps step)) (:times step)) )
+               (+ accum 1))) 0 steps))
 
 
 
 
+(defn get-last-state
+  ([ls] (get-last-state ls false))
+  ([ls text?]
+   (if ls
+     (let [index (if text? 1 0)]
+     (if (map? ls)
+      ((:final-step ls) index)
+      (ls index)))
+      (if text?
+        ""
+        cs))))
+
+
+(defn get-last-cs [app-state]
+  (-> app-state steps-to-app-state last get-last-state))

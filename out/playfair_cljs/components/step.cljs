@@ -13,8 +13,7 @@
                       (let [{:keys [steps text]} step]
                         (dom/div #js {:className "largeContainer"}
                           (dom/p #js {:className "specialText"} text)
-                          (apply dom/div nil (om/build-all render-step steps))
-                                 ))
+                          (apply dom/div nil (om/build-all render-step steps))))
                       (let [[cs text active?] step]
                        (dom/div #js {:className (if active? "activeStepContainer" "stepContainer") }
                         (dom/p #js {:className "stepText"} text)

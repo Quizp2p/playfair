@@ -1,6 +1,7 @@
 Design Doc
 
 
+
 Oh dear design doc. What should I do tonight?
 
 --------------
@@ -28,3 +29,6 @@ I need to learn vectors.
 
 
 For many of my reduces I really want to comp the vector. Maybe?
+
+
+Oh design doc why did I make you only to ignore you?
