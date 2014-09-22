@@ -4,7 +4,8 @@
             [playfair-cljs.debug :as debug]
             [playfair-cljs.components.canvas :as canvas]
             [playfair-cljs.appstate :as state]
-            [playfair-cljs.shapes :as shapes]))
+            [playfair-cljs.asCompiler :as asc]
+            [playfair-cljs.shapeData :as s-data]))
 
 (defn render-step [step owner]
   (reify om/IRender
@@ -17,8 +18,8 @@
                       (let [[cs text active?] step]
                        (dom/div #js {:className (if active? "activeStepContainer" "stepContainer") }
                         (dom/p #js {:className "stepText"} text)
-                        (apply dom/svg #js {:width 100 :height 100 :viewBox (str "0 0 " (shapes/canvas-size 0) " " (shapes/canvas-size 1))  :className "stepSVG"}
-                                 (om/build-all canvas/render-canvas (shapes/make-renderable cs)))))))))
+                        (apply dom/svg #js {:width 100 :height 100 :viewBox (str "0 0 " (s-data/canvas-size 0) " " (s-data/canvas-size 1))  :className "stepSVG"}
+                                 (om/build-all canvas/render-canvas (asc/make-renderable cs)))))))))
 
 
 ;; Couple ifs.

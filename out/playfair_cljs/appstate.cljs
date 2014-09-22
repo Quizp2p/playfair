@@ -1,7 +1,6 @@
 (ns playfair-cljs.appstate)
 
 
-
 (def app-state (atom {:active-steps [0 0]
 
                       :step-direction "up"

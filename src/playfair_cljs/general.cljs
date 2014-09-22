@@ -5,6 +5,11 @@
   (reduce (fn [rec [look-up value]]
             (assoc rec look-up value)) reciever assoc-pairs))
 
+
+
+
+
+
 (defn multi-assoc-in [reciever & assoc-pairs]
   (reduce (fn [rec [look-up value]]
             (assoc-in rec look-up value)) reciever assoc-pairs))
@@ -19,3 +24,7 @@
    (if (empty? v)
      []
      (pop v)))
+
+(defn conj-in [x lookup-vec added-val]
+  (assoc-in x lookup-vec (conj (get-in x lookup-vec)
+                               added-val)))

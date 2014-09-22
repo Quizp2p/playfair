@@ -9,12 +9,15 @@
             [playfair-cljs.appstate :as state]
             [playfair-cljs.components.step :as step]
             [playfair-cljs.components.commands :as commands]
-            [playfair-cljs.shapes :as shapes]
+            [playfair-cljs.asCompiler :as asc]
             [playfair-cljs.debug :as debug]
             [playfair-cljs.math :as bmath]
             [playfair-cljs.components.data :as data]
             [playfair-cljs.components.canvasEvents :as ca]
-            [playfair-cljs.general :as g]))
+            [playfair-cljs.general :as g]
+            [playfair-cljs.shapeData :as s-data]
+            [playfair-cljs.csCompiler :as csc]
+            [playfair-cljs.channels :as channels]))
 
 (enable-console-print!)
 
@@ -27,14 +30,13 @@
                                                         nil))) r-shapes))
 
 
-
-
 (defn render-app [steps owner]
-  ;;(debug/log (:active-steps steps))
+  (debug/log  (:steps steps))
   (reify
     om/IRender
     (render [this]
-            (let [app-state (shapes/steps-to-app-state steps)]
+            (let [app-state (asc/steps-to-app-state steps)]
+            (debug/log steps)
             (dom/div nil
               (dom/div #js {:className "screens"}
                        (dom/svg #js {:width 100 :height 100})
@@ -46,16 +48,16 @@
                      (apply dom/div nil (om/build-all step/render-step app-state)))
               (dom/div #js {:className "canvas"}
                     (dom/div #js {:id "mainCanvas"}
-                     (dom/p #js {:className "center"} (shapes/get-last-state (last app-state) :text))
-                       (let [last-state (-> app-state last shapes/get-last-state)
-                             second-last-state (-> app-state g/safe-pop last shapes/get-last-state)]
-                         (apply dom/svg #js {:onMouseMove #(put! shapes/canvas-chan {:e-type :mouseMove, :e (.-nativeEvent %), :reciever :canvas, :second-last-state second-last-state})
-                                             :onMouseDown #(put! shapes/canvas-chan {:e-type :mouseDown, :e (.-nativeEvent %), :reciever :canvas, :second-last-state second-last-state})
-                                             :onMouseUp #(put! shapes/canvas-chan {:e-type :mouseUp, :e (.-nativeEvent %), :reciever :canvas, :second-last-state second-last-state})
-                                             :width (shapes/canvas-size 0)
-                                             :height (shapes/canvas-size 1)
+                     (dom/p #js {:className "center"} (asc/get-last-state (last app-state) :text))
+                       (let [last-state (-> app-state last asc/get-last-state)
+                             second-last-state (-> app-state g/safe-pop last asc/get-last-state)]
+                         (apply dom/svg #js {:onMouseMove #(put! channels/canvas-chan {:e-type :mouseMove, :e (.-nativeEvent %), :reciever :canvas, :second-last-state second-last-state})
+                                             :onMouseDown #(put! channels/canvas-chan {:e-type :mouseDown, :e (.-nativeEvent %), :reciever :canvas, :second-last-state second-last-state})
+                                             :onMouseUp #(put! channels/canvas-chan {:e-type :mouseUp, :e (.-nativeEvent %), :reciever :canvas, :second-last-state second-last-state})
+                                             :width (s-data/canvas-size 0)
+                                             :height (s-data/canvas-size 1)
                                              :id "bigCanvas"}
-                                (om/build-all canvas/render-canvas (-> last-state (shapes/check-nodes (:key-state steps))))))))
+                                (om/build-all canvas/render-canvas (-> last-state (csc/check-nodes (:key-state steps))))))))
               (dom/div #js {:className "commands"}
                       (apply dom/ul nil
                              (om/build-all commands/render-commands (map (fn [key-vec] (conj key-vec (:key-state steps))) commands/command-list))))
@@ -70,7 +72,7 @@
   state/app-state
   {:target (. js/document (getElementById "app"))
    :shared {:keychan keylistener/key-chan
-            :canchan shapes/canvas-chan}})
+            :canchan channels/canvas-chan}})
 
 (def big-c-pos
   (let [rect (.getBoundingClientRect (.getElementById js/document "bigCanvas"))]

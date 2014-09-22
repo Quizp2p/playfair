@@ -4,7 +4,8 @@
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [put! chan <!]]
             [playfair-cljs.debug :as debug]
-            [playfair-cljs.shapes :as shapes]))
+            [playfair-cljs.asCompiler :as asc]
+            [playfair-cljs.shapeData :as s-data]))
 
 (def key-chan (chan))
 
@@ -29,9 +30,9 @@
    :right 39})
 
 (defn check-bounds [numb inc-or-dec steps]
-  (debug/log (shapes/count-all-steps steps))
+  (debug/log (asc/count-all-steps steps))
   (if (= inc-or-dec "inc")
-    (if (= numb (- (shapes/count-all-steps steps) 1))
+    (if (= numb (- (asc/count-all-steps steps) 1))
         numb
         (inc numb))
     (if (= numb 0)
@@ -67,8 +68,8 @@
                                                                  head (subvec steps 0 s1)
                                                                  looped (subvec steps s1 (+ s2 1))
                                                                  tail (subvec steps (+ s2 1) (count steps))
-                                                                 log (debug/log (vec (concat head (shapes/make-for 5 looped) tail)))]
-                                                             (assoc app-state :steps (vec (concat head [(shapes/make-for 20 looped)] tail))))))
+                                                                 log (debug/log (vec (concat head (s-data/make-for 5 looped) tail)))]
+                                                             (assoc app-state :steps (vec (concat head [(s-data/make-for 20 looped)] tail))))))
         (= (:i key-codes) keyCode) (om/transact! app :key-state (fn [_] :if))
         (= (:g key-codes) keyCode) (om/transact! app :key-state (fn [_] :guide))
         (= (:k key-codes) keyCode) (om/transact! app :key-state (fn [_] :clip))

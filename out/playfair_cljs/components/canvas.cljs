@@ -1,8 +1,10 @@
 (ns playfair-cljs.components.canvas
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [playfair-cljs.shapes :as shapes]
-            [playfair-cljs.debug :as debug]))
+            [playfair-cljs.shapeData :as s-data]
+            [playfair-cljs.csCompiler :as csc]
+            [playfair-cljs.debug :as debug]
+            [playfair-cljs.shapeDataConversion :as sdc]))
 
 
 ;;We have pre stream [steps]
@@ -11,7 +13,7 @@
 ;;These 3 things should have different names.
 (defn make-x [position-attrs]
   (let [[p-type x y] (position-attrs 0)
-        vis-attrs shapes/guide-shape-visual
+        vis-attrs s-data/guide-shape-visual
         size 5
         m-line (fn [flip]
                  {:shape-name :line
@@ -23,7 +25,7 @@
 
 
 (defn render-canvas [{:keys [shape-name position-attrs visual-attrs] :as shape} owner]
-  (let [shape-attrs (clj->js (conj (shapes/nodes-to-attrs shape-name position-attrs) visual-attrs))]
+  (let [shape-attrs (clj->js (conj (sdc/nodes-to-attrs shape-name position-attrs) visual-attrs))]
     (reify om/IRender
       (render [this]
            (if (and (= shape-name :path) (= (count position-attrs) 1))
