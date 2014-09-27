@@ -143,7 +143,11 @@
     (str (name (snap-vec 0)) (snap-vec 1))))
 
 
-(defn make-draw-cs [canvas-state {:keys [shape from-node from-shape x y to-node to-shape diffX diffY] :as draw-map}]
+(defmulti get-cs-fn :step-name)
+
+
+(defmethod get-cs-fn :draw [{:keys [shape from-node from-shape x y to-node to-shape diffX diffY] :as draw-map}]
+            (fn [canvas-state]
               (let [[x y] (if from-node
                                   (snap canvas-state from-node from-shape)
                                   [x y])
@@ -165,10 +169,13 @@
                                                                             (if (:guide draw-map)
                                                                                 s-data/guide-shape-visual
                                                                                 (:vis-attrs draw-map)))
-                                               :active (:active draw-map)})))
+                                               :active (:active draw-map)}))))
 
 
-(defn start-path-cs [canvas-state {:keys [step-name x y from-node from-shape vis-attrs] :as s-path}]
+
+
+(defmethod get-cs-fn :path-start [{:keys [step-name x y from-node from-shape vis-attrs] :as s-path}]
+            (fn [canvas-state]
                (g/conj-in canvas-state [:path] {:shape-name :path,
                                              :position-attrs (if from-shape (let [[s-key s-index] from-shape
                                                                                   snap-point (get-in canvas-state [s-key s-index :position-attrs from-node])]
@@ -177,16 +184,21 @@
                                              :visual-attrs (conj (if (:guide s-path)
                                                                      s-data/guide-shape-visual
                                                                      s-data/default-shape-visual) vis-attrs)
-                                             :active (:active s-path)}))
+                                             :active (:active s-path)})))
 
-(defn extend-path-cs [canvas-state {:keys [path-index p-type x y to-shape to-node]}]
-  (g/conj-in canvas-state [:path path-index :position-attrs] (if to-shape
+(defmethod get-cs-fn :path-extend [{:keys [path-index p-type x y to-shape to-node]}]
+  (fn [canvas-state]
+    (g/conj-in canvas-state [:path path-index :position-attrs] (if to-shape
                                                              (let [[x y] (snap canvas-state to-node to-shape)]
                                                                    [p-type x y])
-                                                             [p-type x y])))
+                                                             [p-type x y]))))
 
 
-(defn make-scale-cs [canvas-state {:keys [step-name shape-lookup node scale-val]}]
+
+
+
+(defmethod get-cs-fn :scale [{:keys [step-name shape-lookup node scale-val]}]
+    (fn [canvas-state]
       (let [[shape-key shape-index] shape-lookup
             shape-map ((shape-key canvas-state) shape-index)
             {:keys [shape-name] :as shape} (assoc-in shape-map [:position-attrs] (sdc/nodes-to-attrs shape-key (:position-attrs shape-map)))
@@ -194,12 +206,13 @@
                    ]
                    (shape-name {:rect (assoc-in canvas-state [shape-key shape-index :position-attrs] (scale-rect node shape scale-val))
                                 :circle (assoc-in canvas-state [shape-key shape-index :position-attrs] (scale-circle node shape scale-val))
-                                :line (assoc-in canvas-state [shape-key shape-index :position-attrs] (scale-line node shape-map scale-val))})))
+                                :line (assoc-in canvas-state [shape-key shape-index :position-attrs] (scale-line node shape-map scale-val))}))))
 
 
 
 
-(defn make-rotate-cs [canvas-state {:keys [shape-lookup node rotate-val]}]
+(defmethod get-cs-fn :rotate [{:keys [shape-lookup node rotate-val]}]
+      (fn [canvas-state]
         (let [[shape-key index] shape-lookup
               rotated-canvas-state (assoc-in canvas-state [shape-key index :position-attrs]
                                              (reduce (fn [accum [node-name node-pos]]
@@ -207,82 +220,118 @@
                                                            [new-x new-y] (sdc/rotate-point-around-point [(:x (node shape-pos)) (:y (node shape-pos))]
                                                                                                     [(:x  node-pos) (:y node-pos)] rotate-val)]
                                                     (assoc accum node-name {:x new-x :y new-y}))) {} (vec (get-in canvas-state [shape-key index :position-attrs]))))]
-                     rotated-canvas-state))
-
-
-(defn make-move-cs [canvas-state {:keys [shape-lookup from-node to-node to-shape diffX diffY]}]
-  (let [[shape-key index] shape-lookup
-        {:keys [position-attrs shape-name]} ((shape-key canvas-state) index)
-                     [diffX diffY] (if to-node
-                                     (let [moved-node-pos (from-node position-attrs)
-                                           [to-shape-key to-index] to-shape
-                                           snapped-shape-pos (to-node (:position-attrs ((to-shape-key canvas-state) to-index)))]
-                                       [(- (:x snapped-shape-pos) (:x moved-node-pos))
-                                        (- (:y snapped-shape-pos) (:y moved-node-pos))])
-                                       [diffX diffY])
-                     shape-pos-attrs (sdc/nodes-to-attrs shape-name position-attrs)
-                     positions (reduce conj (map (fn [pos-attr]
-                                                     (cond (> (.indexOf (str pos-attr) "x") 0) {pos-attr (+ (pos-attr shape-pos-attrs) diffX)}
-                                                           (> (.indexOf (str pos-attr) "y") 0) {pos-attr (+ (pos-attr shape-pos-attrs) diffY)})) (sdc/get-pos-key shape-name)))]
-    (assoc-in canvas-state [shape-key index :position-attrs] (sdc/attrs-to-nodes shape-key (conj shape-pos-attrs positions)))))
+                     rotated-canvas-state)))
 
 
 
-
+(defmethod get-cs-fn :move [{:keys [shape-lookup from-node to-node to-shape diffX diffY]}]
+  (fn [canvas-state]
+    (let [[shape-key index] shape-lookup
+          {:keys [position-attrs shape-name]} ((shape-key canvas-state) index)
+                       [diffX diffY] (if to-node
+                                       (let [moved-node-pos (from-node position-attrs)
+                                             [to-shape-key to-index] to-shape
+                                             snapped-shape-pos (to-node (:position-attrs ((to-shape-key canvas-state) to-index)))]
+                                         [(- (:x snapped-shape-pos) (:x moved-node-pos))
+                                          (- (:y snapped-shape-pos) (:y moved-node-pos))])
+                                         [diffX diffY])
+                       shape-pos-attrs (sdc/nodes-to-attrs shape-name position-attrs)
+                       positions (reduce conj (map (fn [pos-attr]
+                                                       (cond (> (.indexOf (str pos-attr) "x") 0) {pos-attr (+ (pos-attr shape-pos-attrs) diffX)}
+                                                             (> (.indexOf (str pos-attr) "y") 0) {pos-attr (+ (pos-attr shape-pos-attrs) diffY)})) (sdc/get-pos-key shape-name)))]
+      (assoc-in canvas-state [shape-key index :position-attrs] (sdc/attrs-to-nodes shape-key (conj shape-pos-attrs positions))))))
 
 
 
 
-;;------------------TEXT----------------------------------------------------
+(defmethod get-cs-fn :for [step]
+  (fn [cs] cs))
+
+
+
+;;------------------TEXT-----------------------
 
 (defn s-lookup-txt [s-lookup]
   (if (= :canvas s-lookup)
     "canvas"
     (str (name (s-lookup 0))  (s-lookup 1))))
 
-(defn draw-text [{:keys [shape from-node from-shape x y to-node to-shape diffX diffY]}]
-  (let [dec-places 1]
-  (str "Draw " (name shape)
-               (if from-node
-                  (str " at " (get-snap-name from-shape) "'s " (name from-node) " ")
-                  (str " from (" (math/round x dec-places) ", " (math/round y dec-places) ") " ))
-               (if to-node
-                  (str "to " (get-snap-name to-shape) "'s " (name to-node))
-                  (str (math/round diffX dec-places) "px horizontally " (math/round diffY dec-places) "px vertically")))))
-
-(defn move-text [{:keys [shape-lookup from-node to-node to-shape diffX diffY]}]
-    (str "Move " (get-snap-name shape-lookup) (if diffX
-                                                       (str " " diffX "px horizontally " diffY "px vertically")
-                                                       (str "'s " (name from-node) " to " (get-snap-name to-shape) "'s " (name to-node)))))
+(defmulti get-text :step-name)
 
 
-(defn rotate-text [{:keys [shape-lookup node rotate-val]}]
-  (let [[shape-key index] shape-lookup]
-    (str "Rotate " (get-snap-name [shape-key index])
-         " around " (get-snap-name [shape-key index] ) "'s " (name (sdc/get-opposite-node node)) " by " rotate-val)))
+(defmethod get-text :draw
+  [{:keys [shape from-node from-shape x y to-node to-shape diffX diffY scrub?]}]
+  (let [dec-places 1
+        text (concat ["Draw " (name shape)]
+                                (if from-node
+                                  [" at " (get-snap-name from-shape) "'s " (name from-node) " "]
+                                  [" from (" (if scrub? {:value (math/round x dec-places) :step-key :x} (math/round x dec-places))
+                                ", " (if scrub? {:value (math/round y dec-places) :step-key :y} (math/round y dec-places)) ") "])
+                                (if to-node
+                                  ["to " (get-snap-name to-shape) "'s " (name to-node)]
+                                  [(if scrub? {:value (math/round diffX dec-places) :step-key :diffX} (math/round diffX dec-places))
+                                  "px horizontally "
+                                  (if scrub? {:value (math/round diffY dec-places) :step-key :diffY} (math/round diffY dec-places))
+                                  "px vertically"]))]
+  (if scrub? text (reduce str text))))
+
+(defmethod get-text :move
+  [{:keys [shape-lookup from-node to-node to-shape diffX diffY scrub?]}]
+  (let [text (concat ["Move " (get-snap-name shape-lookup)]
+               (if diffX
+                    [" " (if scrub? {:value diffX :step-key :diffX} diffX)  "px horizontally " (if scrub? {:value diffY :step-key :diffY} diffY) "px vertically"]
+                    ["'s " (name from-node) " to " (get-snap-name to-shape) "'s " (name to-node)]))]
+    (if scrub? text (reduce str text))))
 
 
-(defn path-start-text [{:keys [x y from-shape from-node]}]
-    (str "Start path " (if from-shape (str "at " (name (from-shape 0)) (from-shape 1) "'s " from-node) (str x "px horizontally " y "px vertically"))))
+(defmethod get-text :rotate
+  [{:keys [shape-lookup node rotate-val]} scrub?]
+  (let [[shape-key index] shape-lookup
+        add-text-data (fn [r-val] ["Rotate " (get-snap-name [shape-key index])
+                                     " around " (get-snap-name [shape-key index])
+                                     "'s " (name (sdc/get-opposite-node node)) " by " r-val])]
+
+  (if scrub?
+      (add-text-data {:value rotate-val :step-key :rotate-val})
+      (reduce str (add-text-data rotate-val)))))
+
+
+(defmethod get-text :path-start
+  [{:keys [x y from-shape from-node scrub?]}]
+     (let [text (concat ["Start path "] (if from-shape  ["at " (name (from-shape 0)) (from-shape 1) "'s " from-node]
+                                             [(if scrub? {:value x :step-key :x} x) "px horizontally " (if scrub? {:value x :step-key :x} y) "px vertically"]))]
+      (if scrub? text (reduce str text))))
 
 
 
-(defn path-extend-text [{:keys [path-index p-type x y to-shape to-node]}]
-  (let [p-t-lookup {"L" "line"
-                    "H" "horizontal line"
-                    "V" "vertical line"
-                    "C" "cubic Bézier"}]
-    (str "Extend path" path-index  " with " (get p-t-lookup p-type) (cond
-                                                                     (and to-shape (number? to-node)) (str " to " to-node " along " (s-lookup-txt to-shape))
-                                                                     to-shape (str " to " (s-lookup-txt to-shape) "'s " (name to-node))
-                                                                     :else    (str x "px horizontally " y "px vertically")))))
+(defmethod get-text :path-extend
+  [{:keys [path-index p-type x y to-shape to-node scrub?]}]
+    (let [p-t-lookup {"L" "line"
+                      "H" "horizontal line"
+                      "V" "vertical line"
+                      "C" "cubic Bézier"}
+          text (concat ["Extend path" path-index  " with " (get p-t-lookup p-type) " "]
+                       (cond
+                         to-shape  [" to " (s-lookup-txt to-shape) "'s " (name to-node)]
+                         :else [(if scrub? {:value x :step-key :x} x) "px horizontally " (if scrub? {:value y :step-key :y} y) "px vertically"]))]
+      (if scrub? text (reduce str text))))
 
-(defn scale-text [{:keys [step-name shape-lookup node scale-val]}]
-  (let [[shape-key shape-index] shape-lookup]
-    (str "Scale " (get-snap-name [shape-key shape-index]) " around "  (get-snap-name [shape-key shape-index]) "'s "
-         (name (sdc/get-opposite-node node)) " by " scale-val)))
+(defmethod get-text :scale
+  [{:keys [step-name shape-lookup node scale-val scrub?]}]
+    (let [[shape-key shape-index] shape-lookup
+          text ["Scale " (get-snap-name [shape-key shape-index]) " around "  (get-snap-name [shape-key shape-index]) "'s "
+                 (name (sdc/get-opposite-node node)) " by " (if scrub? {:value scale-val :step-key :scale-val} scale-val)]]
+       (if scrub?
+         text
+         (reduce str text))))
 
-(defn for-text [{:keys [times for-steps]}]
-  (str "Repeat from 1 to " (+ times 1)))
+(defmethod get-text :for
+ [{:keys [times for-steps scrub?]}]
+  (if scrub?
+    ["Repeat from 1 to " {:value (+ times 1) :step-key :times}]
+    (str "Repeat from 1 to " (+ times 1))))
+
+
+
 
 

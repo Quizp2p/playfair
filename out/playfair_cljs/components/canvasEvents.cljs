@@ -70,9 +70,22 @@
 (defn check-path-start [[m-x m-y] state]
   (check-snap [m-x m-y] (dissoc state :rect :circle :line)))
 
+(defn check-snap-at-mouse [[c-m-x c-m-y] snap-app-state]
+  (let [snapped-list (check-snap [c-m-x c-m-y] snap-app-state)]
+    (if (empty? snapped-list)
+         [c-m-x c-m-y]
+         [((first snapped-list) 0) ((first snapped-list) 1)])))
+
 (defn cleanse-draw [draw-map]
   (-> draw-map (dissoc :diffX) (dissoc :diffY) (dissoc :to-node) (dissoc :to-shape)))
 
+;;For mouse down something allways gets conj'd with steps. the
+
+(defn mouse-down-action [app-state new-step in-progress]
+  (do
+    (om/transact! app-state (fn [as] (assoc as :steps (conj (:steps as) new-step)
+                                               :active-steps [(count (:steps as)) (count (:steps as))])))
+    (swap! state/gui-state (fn [gs] (assoc gs :in-progress? in-progress)))))
 
 (defn canvas-event-handler [app-state {:keys [e-type e reciever] :as event-data}]
   (let [bounded-rect (.getBoundingClientRect (.getElementById js/document "bigCanvas"))
@@ -103,8 +116,7 @@
                                                                                                                                                          [:to-shape ((first snapped-list) 1)]))))))
                                   (= in-progress? :rotate) (om/transact! app-state :steps (fn [steps]
                                                                                              (let [[s-name s-index] (:shape-lookup (last steps))
-                                                                                                   from-node ((:node (last steps)) (:position-attrs ((s-name (asc/get-last-cs @state/app-state)) s-index)))
-                                                                                                   debug (debug/log steps)]
+                                                                                                   from-node ((:node (last steps)) (:position-attrs ((s-name (asc/get-last-cs @state/app-state)) s-index)))]
                                                                                                (conj (g/safe-pop steps) (assoc (last steps) :rotate-val (get-rotate-val [(:x from-node) (:y from-node)] [c-m-x c-m-y] [m-d-x m-d-y]))))))
                                   (= in-progress? :scale) (om/transact! app-state :steps (fn [steps] (let [[s-name s-index] (:shape-lookup (last steps))
                                                                                                      from-node ((sdc/get-opposite-node (:node (last steps))) (:position-attrs ((s-name (asc/get-last-cs @state/app-state)) s-index)))
@@ -116,43 +128,33 @@
 
      (= e-type :mouseDown) (do (swap! state/gui-state (fn [gui-state] (g/multi-assoc gui-state [:mouse-down-pos [(- (.-clientX e) target-x) (- (.-clientY e) target-y)]]
                                                                                              [:mouse-down? true])))
-                               (om/transact! app-state (fn [as] (assoc as :active-steps [(count (:steps as)) (count (:steps as))])))
                                (let [{:keys [mouse-down? canvas-m-pos in-progress?]} @state/gui-state
                                      [c-m-x c-m-y] canvas-m-pos]
                                     (cond
-                                       (and (some #(= % (:key-state @state/app-state)) [:line :rect :circle]) (= reciever :canvas))
-                                            (do
-                                              (let [snapped-list (check-snap canvas-m-pos (asc/get-last-cs @state/app-state))]
-                                                (om/transact! app-state :steps (fn [steps] (conj steps (s-data/make-draw (:key-state @state/app-state) (if (empty? snapped-list)
-                                                                                                                                                         [c-m-x c-m-y]
-                                                                                                                                                         [((first snapped-list) 0) ((first snapped-list) 1)])  [1 1])))))
-                                             (swap! state/gui-state (fn [gs] (assoc gs :in-progress? (:key-state @state/app-state)))))
-                                       (and (= :move (:key-state @state/app-state)) (= reciever :node))
-                                            (do
-                                            (om/transact! app-state :steps #(conj % (s-data/make-move (:from-node event-data) (:shape-lookup event-data) 0 0)))
-                                            (swap! state/gui-state (fn [gs] (assoc gs :in-progress? :move))))
-                                       (and (= :rotate (:key-state @state/app-state)) (= reciever :node))
-                                            (do
-                                              (om/transact! app-state :steps #(conj % (s-data/make-rotate (:shape-lookup event-data) (sdc/get-opposite-node (:from-node event-data)) 0)))
-                                              (swap! state/gui-state (fn [gs] (assoc gs :in-progress? :rotate))))
-                                       (and (= :scale (:key-state @state/app-state)) (= reciever :node))
-                                            (do
-                                              (om/transact! app-state :steps #(conj % (s-data/make-scale (:shape-lookup event-data) (:from-node event-data) 1)))
-                                              (swap! state/gui-state (fn [gs] (assoc gs :in-progress? :scale))))
-                                       (and (= :path (:key-state @state/app-state)) (= reciever :canvas))
-                                         (let [p-start (check-path-start [c-m-x c-m-y] (asc/get-last-cs @state/app-state))]
-                                                (if (> (count p-start) 0)
-                                                  (do
-                                                    (om/transact! app-state :steps #(conj % (s-data/make-path-extend (((first p-start) 1) 1) "L" c-m-x c-m-y)))
-                                                    (swap! state/gui-state (fn [gs] (assoc gs :in-progress? :path-extend))))
-                                                  (do
-                                                    (om/transact! app-state :steps #(conj % (s-data/make-path-start c-m-x c-m-y nil nil)))
-                                                    (swap! state/gui-state (fn [gs] (assoc gs :in-progress? :path)))))))))
+                                       (and (some #(= % (:key-state @state/app-state)) [:line :rect :circle]) (= reciever :canvas)) (mouse-down-action app-state (s-data/make-draw (:key-state @state/app-state)
+                                                                                                                                                                                    (check-snap-at-mouse canvas-m-pos (asc/get-last-cs @state/app-state))
+                                                                                                                                                                                    [1 1])
+                                                                                                                                                                  (:key-state @state/app-state))
 
-     (= e-type :mouseUp) (swap! state/gui-state (fn [gui-state]
-                                                  (do
-                                                    (g/multi-assoc gui-state [:mouse-down? false] [:in-progress? false] [:in-progress? false])
-                                                    (om/transact! app-state :key-state (fn [ks] :select))))))))
+                                       (and (= :move (:key-state @state/app-state)) (= reciever :node)) (mouse-down-action app-state (s-data/make-move (:from-node event-data) (:shape-lookup event-data) 0 0) :move)
+
+                                       (and (= :rotate (:key-state @state/app-state)) (= reciever :node)) (mouse-down-action app-state (s-data/make-rotate (:shape-lookup event-data) (sdc/get-opposite-node (:from-node event-data)) 0) :rotate)
+
+                                       (and (= :scale (:key-state @state/app-state)) (= reciever :node)) (mouse-down-action app-state (s-data/make-scale (:shape-lookup event-data) (:from-node event-data) 1) :scale)
+
+                                       (and (= :path (:key-state @state/app-state)) (= reciever :canvas)) (let [p-start (check-path-start [c-m-x c-m-y] (asc/get-last-cs @state/app-state))]
+                                                                                                                 (mouse-down-action app-state (if (> (count p-start) 0)
+                                                                                                                                                  (s-data/make-path-extend (((first p-start) 1) 1) "L" c-m-x c-m-y)
+                                                                                                                                                  (s-data/make-path-start c-m-x c-m-y nil nil))
+                                                                                                                                              (if (> (count p-start) 0)
+                                                                                                                                                  :path-extend
+                                                                                                                                                  :path))))))
+
+     (= e-type :mouseUp) (do (swap! state/gui-state (fn [gui-state]
+                                                    (g/multi-assoc gui-state [:mouse-down? false] [:in-progress? false] [:in-progress? false])))
+                             (om/transact! app-state :key-state (fn [ks] :select))))))
+
+
 
 
 
@@ -170,6 +172,7 @@
     om/IRender
     (render [this]
       (dom/div nil ""))))
+
 
 
 

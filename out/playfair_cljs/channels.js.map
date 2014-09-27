@@ -2,7 +2,8 @@
  "file":
  "/Users/brianzindler/Code/clojure_script/playfair-cljs/out/playfair_cljs/channels.js",
  "sources":["channels.cljs"],
- "lineCount":8,
- "mappings":";AAAA;;;;AAIA,AAAKA,qCAAY,AAACC",
+ "lineCount":9,
+ "mappings":";AAAA;;;;AAIA,AAAKA,qCAAY,AAACC;AAElB,AAAKC,qCAAY,AAACD",
  "names":
- ["playfair-cljs.channels/canvas-chan", "cljs.core.async/chan"]}
+ ["playfair-cljs.channels/canvas-chan", "cljs.core.async/chan",
+  "playfair-cljs.channels/global-chan"]}

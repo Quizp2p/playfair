@@ -1,19 +1,21 @@
 (ns playfair-cljs.asCompiler
-  (:require [playfair-cljs.csCompiler :as csc]))
+  (:require [playfair-cljs.csCompiler :as csc]
+            [playfair-cljs.debug :as debug]
+            [playfair-cljs.shapeData :as s-data]))
 
 (def cs {:rect [] :circle []
          :path [] :line []})
+
+
+;;TO DO
+;;write active checker
+;;rewrite app state func
 
 (defn count-all-steps [steps]
  (reduce (fn [accum {:keys [step-name] :as step}]
            (if (= step-name :for)
                (+ accum (* (count (:for-steps step)) (:times step)) )
                (+ accum 1))) 0 steps))
-
-
-
-
-
 
 
 (def shape-lookup-vars {:draw [:from-shape :to-shape]
@@ -27,47 +29,34 @@
   (reduce (fn [accum [s-key s-vec]]
           (assoc accum s-key (count s-vec))) {} cs))
 
-(defn check-for-step [loop-ind canvas-state]
-  (let [cs-with-count (get-cs-count canvas-state)]
-    (fn [{:keys [step-name] :as step}]
-      (reduce (fn [alt-step l-var]
-                  (if (l-var alt-step)
-                      (let [[s-name s-ind] (l-var alt-step)]
-                                      (if (<= (s-name cs-with-count) s-ind)
-                                        (assoc alt-step l-var [s-name (+ s-ind loop-ind)])
-                                        alt-step)) alt-step)) step (step-name shape-lookup-vars)))))
 
-(defn unwrap-for-step [{:keys [times for-steps]} canvas-state]
+(defn check-for-step [loop-ind s-count f-s-count]
+  (fn [{:keys [step-name] :as step}]
+    (reduce (fn [step lookup-var]
+              (if (lookup-var step)
+                (let [[s-name s-ind] (lookup-var step)]
+                  (if (<= (s-name s-count) s-ind)
+                              (assoc step lookup-var [s-name (+ s-ind (* loop-ind (s-name f-s-count)))])
+                              step))
+                step)) step (step-name shape-lookup-vars))))
+
+(defn get-shape-count [steps]
+  (reduce (fn [s-count {:keys [shape]}]
+            (if shape
+              (update-in s-count [shape] inc)
+              s-count)) {:rect 0 :line 0 :path 0 :circle 0} steps))
+
+
+(def test-for-step {:step-name :for, :times 3, :for-steps [{:step-name :draw, :shape :line, :x 317, :y 402, :to-node :middle-point, :to-shape [:line 0]}
+                                                          {:step-name :draw, :shape :line, :x 382, :y 240, :to-node :middle-point, :to-shape [:line 1]}
+                                                          {:step-name :scale, :shape-lookup [:line 0], :node :last-point, :scale-val 0.8988448264715291}]})
+
+
+
+(defn unwrap-for-step [{:keys [times for-steps]} shape-count]
   (let [expanded-f-steps (vec (repeat times for-steps))]
-    (vec (map-indexed (fn [loop-ind for-loop]
-                   (vec (map (check-for-step loop-ind canvas-state) for-loop))) expanded-f-steps))))
-
-(def step-func-dictionary {:draw [csc/make-draw-cs csc/draw-text]
-                           :scale [csc/make-scale-cs csc/scale-text]
-                           :rotate [csc/make-rotate-cs csc/rotate-text]
-                           :move [csc/make-move-cs csc/move-text]
-                           :for [nil csc/for-text]
-                           :path-start [csc/start-path-cs csc/path-start-text]
-                           :path-extend [csc/extend-path-cs csc/path-extend-text]})
-
-(defn add-active-for [for-steps pre-for-index check-index]
-         (loop [cs-steps for-steps,
-                index pre-for-index,
-                processed-cs-steps [],
-                active-section 0]
-           (if cs-steps
-             (let [{:keys [inner-cs-steps inner-index active-section]} (reduce (fn [{:keys [inner-index inner-cs-steps active-section]} cs-step]
-                                                                           {:inner-index (inc inner-index)
-                                                                             :inner-cs-steps (conj inner-cs-steps (conj cs-step (check-index inner-index)))
-                                                                             :active-section (if (check-index inner-index)
-                                                                                                 (.floor js/Math (/ (- inner-index pre-for-index) (count (first for-steps))))
-                                                                                                 active-section)})
-                                                                         {:inner-index index :inner-cs-steps [] :active-section active-section}
-                                                                         (first cs-steps))]
-             (recur (next cs-steps) inner-index (conj processed-cs-steps inner-cs-steps) active-section))
-             {:processed-cs-steps (processed-cs-steps active-section) :index index :final-step (last (last processed-cs-steps))})))
-
-
+    (vec (reduce concat (map-indexed (fn [loop-ind for-loop]
+                           (map (check-for-step loop-ind shape-count (get-shape-count for-steps)) for-loop)) expanded-f-steps)))))
 
 
 (def data-variables {:rotate [:rotate-val]
@@ -89,38 +78,49 @@
                                                 (step-val data))
                                               step-val))) {} step-map))))
 
-(defn for-state-maker [exp-for-steps data cs]
-  (loop [cs cs
-         loops exp-for-steps
-         state []
-         loop-index 0]
-    (if loops
-      (let [inner-l-s (reduce (fn [accum {:keys [step-name] :as step}]
-                                (let [[state-maker text-maker] (step-name step-func-dictionary)
-                                      data-checked-step (check-data step data loop-index)
-                                      last-cs (if (= (count accum) 0) cs ((last accum) 0))]
-                                  (conj accum [(state-maker last-cs data-checked-step) (text-maker step)]))) [] (first loops))]
-        (recur ((last inner-l-s) 0) (next loops) (conj state inner-l-s) (inc loop-index)))
-      state)))
 
-(defn steps-to-app-state [{:keys [steps active-steps data]}]
-  (let [func-lookup step-func-dictionary
-        active-step-range (range (active-steps 0) (inc (active-steps 1)))]
-    (:app-state (reduce (fn [{:keys [app-state canvas-state index]} {:keys [step-name] :as step}]
-                            (let [[state-maker text-maker] (step-name func-lookup)
-                                  check-index (fn [dex] (some (fn [x] (= dex x)) active-step-range))]
-                                  (if (= step-name :for)
-                                      (let [checked-step (check-data step data)
-                                            unwrap-steps (unwrap-for-step checked-step canvas-state)
-                                            state (for-state-maker unwrap-steps data canvas-state)
-                                            {:keys [processed-cs-steps index final-step]} (add-active-for state index check-index)]
-                                         {:app-state (conj app-state {:name :for :steps processed-cs-steps :text (text-maker step) :final-step final-step})
-                                          :canvas-state (first final-step)
-                                          :index (inc index)})
-                                      (let [state (state-maker canvas-state (check-data step data)) ]
-                                       {:app-state (conj app-state [state (text-maker step) (check-index index)])
-                                       :canvas-state state
-                                       :index (inc index)}) ))) {:app-state [] :canvas-state cs :index 0} steps))))
+
+(defn check-active [active-steps ind]
+    (if (or (nil? active-steps) (vector? (active-steps 0)))
+      nil
+      (let [[s1 s2] active-steps]
+        (some #(= % ind) (range s1 (+ s2 1))))))
+
+
+;;Steps and app state naming is all backwards
+(defn check-for-data [u-w-steps data loop-size]
+  (map-indexed (fn [i step] (check-data step data (quot i loop-size))) u-w-steps))
+
+(defn get-for-cs [old-cs steps [a-s1 a-s2] ind data]
+ (let [{:keys [for-steps times] :as f-step} (steps ind)
+       get-loop-ind #(+ (* (% 1) (count for-steps)) (% 2))
+       un-w-steps (check-for-data (unwrap-for-step (check-data f-step data) (get-shape-count (subvec steps 0 ind)))
+                                  data
+                                  (count for-steps))
+       for-cs (app-state-to-steps {:steps un-w-steps :active-steps (if (number? a-s1) nil [(get-loop-ind a-s1) (get-loop-ind a-s2)]) :data data} old-cs)]
+   {:name :for
+    :steps (if (number? a-s2)  (subvec for-cs 0 (count for-steps))
+                               (subvec for-cs (* (a-s2 1) (count for-steps)) (* (+ (a-s2 1) 1) (count for-steps))))
+    :text (csc/get-text f-step)
+    :final-step (last for-cs) :active? (check-active [a-s1 a-s2] ind) :all-active? nil}))
+
+
+(defn app-state-to-steps
+  ([as] (app-state-to-steps as cs))
+  ([{:keys [steps active-steps data]} cs]
+    (loop [l-steps steps
+           canvas-state cs
+           app-state []
+           ind 0]
+      (if (seq l-steps)
+        (if (= (:step-name (first l-steps)) :for)
+          (let [for-cs (get-for-cs canvas-state steps active-steps ind data)]
+            (recur (next l-steps) ((:final-step for-cs) 0) (conj app-state for-cs) (inc ind)))
+          (let [new-cs ((csc/get-cs-fn (check-data (first l-steps) data)) canvas-state)]
+            (recur (next l-steps) new-cs (conj app-state [new-cs
+                                                        (csc/get-text (first l-steps))
+                                                        (check-active active-steps ind)]) (inc ind))))
+        app-state))))
 
 
 (defn get-last-state
@@ -136,7 +136,10 @@
         cs))))
 
 (defn get-last-cs [app-state]
-  (-> app-state steps-to-app-state last get-last-state))
+  (-> app-state app-state-to-steps last get-last-state))
 
 (defn make-renderable [{:keys [rect circle line path]}]
   (vec (flatten (conj [] rect circle line path))))
+
+
+

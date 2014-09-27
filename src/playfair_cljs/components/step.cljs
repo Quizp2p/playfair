@@ -11,7 +11,7 @@
   (reify om/IRender
     (render [this]
                 (if (map? step)
-                      (let [{:keys [steps text]} step]
+                      (let [{:keys [steps text active?]} step]
                         (dom/div #js {:className "largeContainer"}
                           (dom/p #js {:className "specialText"} text)
                           (apply dom/div nil (om/build-all render-step steps))))

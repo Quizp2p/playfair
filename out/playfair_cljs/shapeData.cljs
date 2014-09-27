@@ -73,7 +73,8 @@
             {:diffY diffY})))
 
 (defn make-path-start [x y options-vec vis-attrs]
-  (conj {:step-name :path-start}
+  (conj {:step-name :path-start
+         :shape :path}
         (if (check-snap y)
           {:from-node x, :from-shape y}
           {:x x, :y y})

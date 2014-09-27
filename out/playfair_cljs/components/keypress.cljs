@@ -30,7 +30,6 @@
    :right 39})
 
 (defn check-bounds [numb inc-or-dec steps]
-  (debug/log (asc/count-all-steps steps))
   (if (= inc-or-dec "inc")
     (if (= numb (- (asc/count-all-steps steps) 1))
         numb
@@ -38,6 +37,35 @@
     (if (= numb 0)
         numb
         (dec numb))))
+
+
+(defn check-bounds-for [[outer-ind loop-ind inner-ind] inc-or-dec times loop-size steps]
+  (let [new-ind (if (= inc-or-dec "inc") (inc inner-ind) (dec inner-ind))]
+    (if (= inc-or-dec "inc")
+      (if (= (inc inner-ind) loop-size)
+        (if (= (inc loop-ind) times)
+          (if (= (inc outer-ind) (count steps)) [outer-ind loop-ind inner-ind] (inc outer-ind))
+          [outer-ind (inc loop-ind) 0])
+        [outer-ind loop-ind (inc inner-ind)])
+      (if (= (dec inner-ind) -1)
+        (if (= (dec loop-ind) -1)
+          outer-ind
+          [outer-ind (dec loop-ind) (dec loop-size)])
+        [outer-ind loop-ind (dec inner-ind)]))))
+
+
+
+(defn check-step [current-numb inc-or-dec steps]
+  (let [current-step (steps (if (number? current-numb) current-numb (current-numb 0)))]
+    (if (= (:step-name current-step) :for)
+      (if (number? current-numb)
+        (if (= inc-or-dec "inc")
+          [current-numb 0 0]
+          (check-bounds current-numb inc-or-dec steps))
+        (check-bounds-for current-numb inc-or-dec (:times current-step) (count (:for-steps current-step)) steps) )
+      (check-bounds current-numb inc-or-dec steps))))
+
+
 
 (defn multi-assoc [reciever & assoc-pairs]
   (reduce (fn [rec [look-up value]]
@@ -69,7 +97,7 @@
                                                                  looped (subvec steps s1 (+ s2 1))
                                                                  tail (subvec steps (+ s2 1) (count steps))
                                                                  log (debug/log (vec (concat head (s-data/make-for 5 looped) tail)))]
-                                                             (assoc app-state :steps (vec (concat head [(s-data/make-for 20 looped)] tail))))))
+                                                             (assoc app-state :steps (vec (concat head [(s-data/make-for 20 looped)] tail)) :active-steps [[s1 0 0] [s1 0 0]]) )))
         (= (:i key-codes) keyCode) (om/transact! app :key-state (fn [_] :if))
         (= (:g key-codes) keyCode) (om/transact! app :key-state (fn [_] :guide))
         (= (:k key-codes) keyCode) (om/transact! app :key-state (fn [_] :clip))
@@ -77,22 +105,21 @@
                                                         (let [[s1 s2] active-steps]
                                                           (if shiftKey
                                                               (if (= step-direction "up")
-                                                                (assoc app-state :active-steps [(check-bounds s1 "dec" steps) s2])
+                                                                (assoc app-state :active-steps [(check-step s1 "dec" steps) s2])
                                                                 (if (= s1 s2)
-                                                                    (multi-assoc app-state [:active-steps [(check-bounds s1 "dec" steps) s2]] [:step-direction "up"])
-                                                                    (assoc app-state :active-steps [s1 (check-bounds s2 "dec" steps)])))
-                                                              (multi-assoc app-state [:active-steps [(check-bounds s2 "dec" steps) (check-bounds s2 "dec" steps)]] [:step-direction "up"])
+                                                                    (multi-assoc app-state [:active-steps [(check-step s1 "dec" steps) s2]] [:step-direction "up"])
+                                                                    (assoc app-state :active-steps [s1 (check-step s2 "dec" steps)])))
+                                                              (multi-assoc app-state [:active-steps [(check-step s2 "dec" steps) (check-step s2 "dec" steps)]] [:step-direction "up"])
                                                               ))))
         (= (:down key-codes) keyCode) (om/transact! app (fn [{:keys [steps active-steps step-direction] :as app-state}]
                                                            (let [[s1 s2] active-steps]
                                                               (if shiftKey
                                                                 (if (= step-direction "down")
-                                                                  (assoc app-state :active-steps [s1 (check-bounds s2 "inc" steps)])
+                                                                  (assoc app-state :active-steps [s1 (check-step s2 "inc" steps)])
                                                                   (if (= s1 s2)
-                                                                    (multi-assoc app-state [:active-steps [s1 (check-bounds s2 "inc" steps)]] [:step-direction "down"])
-                                                                    (assoc app-state :active-steps [(check-bounds s1 "inc" steps) s2])))
-                                                                (multi-assoc app-state [:active-steps [(check-bounds s1 "inc" steps) (check-bounds s1 "inc" steps)]] [:step-direction "down"]))
-                                                             )))))))
+                                                                    (multi-assoc app-state [:active-steps [s1 (check-step s2 "inc" steps)]] [:step-direction "down"])
+                                                                    (assoc app-state :active-steps [(check-step s1 "inc" steps) s2])))
+                                                                (multi-assoc app-state [:active-steps [(check-step s1 "inc" steps) (check-step s1 "inc" steps)]] [:step-direction "down"])))))))))
 
 
 (defn key-listener-component [app owner]

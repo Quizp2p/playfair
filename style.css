@@ -2,6 +2,12 @@
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 html {
@@ -28,6 +34,10 @@ svg {
 
 ul {
   list-style-type: none;
+}
+
+.scrubber:hover {
+  background-color: #B05E97;
 }
 
 #screenButton {
@@ -104,15 +114,15 @@ ul {
 
 p {
   -moz-user-select: -moz-none;
-   -khtml-user-select: none;
-   -webkit-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
 
-   /*
-     Introduced in IE 10.
-     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
-   */
-   -ms-user-select: none;
-   user-select: none;
+  /*
+    Introduced in IE 10.
+    See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+  */
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .commands {

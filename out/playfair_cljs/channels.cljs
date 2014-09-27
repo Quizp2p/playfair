@@ -4,3 +4,5 @@
 
 (def canvas-chan (chan))
 
+(def global-chan (chan))
+
