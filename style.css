@@ -54,6 +54,10 @@ ul {
   border: 0px;
 }
 
+.bold {
+  font-weight: bold;
+}
+
 .stepContainer {
   height: 110px;
 }

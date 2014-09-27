@@ -59,8 +59,8 @@
                                              :id "bigCanvas"}
                                 (om/build-all canvas/render-canvas (-> last-state (csc/check-nodes (:key-state app-state))))))))
               (dom/div #js {:className "commands"}
-                      (apply dom/ul nil
-                             (om/build-all commands/render-commands (map (fn [key-vec] (conj key-vec (:key-state app-state))) commands/command-list))))
+                      (apply dom/div nil
+                             (om/build-all commands/render-command-section (map (fn [key-vec] (conj key-vec (:key-state app-state))) commands/command-list))))
                (dom/div nil (om/build keylistener/key-listener-component app-state))
                (dom/div nil (om/build ca/canvas-events app-state))
                (dom/div nil (om/build scrub/global-events app-state)))))))
