@@ -13,7 +13,7 @@
                 (if (map? step)
                       (let [{:keys [steps text active?]} step]
                         (dom/div #js {:className "largeContainer"}
-                          (dom/p #js {:className "specialText"} text)
+                          (dom/p #js {:className (if active? "activeSpecialText" "specialText") } text)
                           (apply dom/div nil (om/build-all render-step steps))))
                       (let [[cs text active?] step]
                        (dom/div #js {:className (if active? "activeStepContainer" "stepContainer") }

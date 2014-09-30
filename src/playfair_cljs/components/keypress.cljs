@@ -24,10 +24,12 @@
    :i 73
    :g 71
    :k 75
+   :z 90
    :up 38
    :down 40
    :left 37
-   :right 39})
+   :right 39
+   :delete 8})
 
 (defn check-bounds [numb inc-or-dec steps]
   (if (= inc-or-dec "inc")
@@ -65,7 +67,8 @@
         (check-bounds-for current-numb inc-or-dec (:times current-step) (count (:for-steps current-step)) steps) )
       (check-bounds current-numb inc-or-dec steps))))
 
-
+(defn check-max-active-steps [[a-s1 a-s2] steps]
+  [(if (= (- (count steps) 1) a-s1) (- (count steps) 2) a-s1), (if (= (- (count steps) 1) a-s2) (- (count steps) 2) a-s2)])
 
 (defn multi-assoc [reciever & assoc-pairs]
   (reduce (fn [rec [look-up value]]
@@ -73,11 +76,11 @@
 
 
 (defn handle-key-event [app [press-type event]]
+  ;;(debug/log (.-keyCode event))
   (let [keyCode (.-keyCode event)
         metaKey (.-metaKey event)
         shiftKey (.-shiftKey event)
         ctrlKey (.-ctrlKey event)]
-
     (if (= press-type :keyup)
       (om/transact! app :key-state (fn [_] :select))
       (cond
@@ -95,8 +98,7 @@
                                                            (let [[s1 s2] active-steps
                                                                  head (subvec steps 0 s1)
                                                                  looped (subvec steps s1 (+ s2 1))
-                                                                 tail (subvec steps (+ s2 1) (count steps))
-                                                                 log (debug/log (vec (concat head (s-data/make-for 5 looped) tail)))]
+                                                                 tail (subvec steps (+ s2 1) (count steps))]
                                                              (assoc app-state :steps (vec (concat head [(s-data/make-for 20 looped)] tail)) :active-steps [[s1 0 0] [s1 0 0]]) )))
         (= (:i key-codes) keyCode) (om/transact! app :key-state (fn [_] :if))
         (= (:g key-codes) keyCode) (om/transact! app :key-state (fn [_] :guide))
@@ -119,7 +121,15 @@
                                                                   (if (= s1 s2)
                                                                     (multi-assoc app-state [:active-steps [s1 (check-step s2 "inc" steps)]] [:step-direction "down"])
                                                                     (assoc app-state :active-steps [(check-step s1 "inc" steps) s2])))
-                                                                (multi-assoc app-state [:active-steps [(check-step s1 "inc" steps) (check-step s1 "inc" steps)]] [:step-direction "down"])))))))))
+                                                                (multi-assoc app-state [:active-steps [(check-step s1 "inc" steps) (check-step s1 "inc" steps)]] [:step-direction "down"])))))
+
+       (and (= (:z key-codes) keyCode) metaKey) (om/transact! app (fn [{:keys [active-steps steps] :as as}]
+                                                                         (assoc as :steps (pop steps) :active-steps (check-max-active-steps active-steps steps))))
+
+       ;;(= (:delete key-codes) keyCode) (om/transact! app (fn [{:keys [steps active-steps] :as as}]
+       ;;                                                    (update-in as [:steps] (fn [steps]
+       ;;                                                                             (vec (concat (subvec steps 0 (active-steps 0)) (subvec steps (+ (active-steps 1) 1) (count steps)))) ))))
+       ))))
 
 
 (defn key-listener-component [app owner]
@@ -131,7 +141,8 @@
           (while true
             (let [[v ch] (alts! [keychan])]
               (when (= ch keychan)
-                (do (handle-key-event app v))))))))
+                (do
+                  (handle-key-event app v))))))))
 
     om/IRender
     (render [this]

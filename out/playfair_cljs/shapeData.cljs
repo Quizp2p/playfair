@@ -5,19 +5,19 @@
 
 
 (def default-shape-visual
-  {:fill "#1F1E1D", :className "shape", :stroke "#1F1E1D", :strokeWidth 3})
+  {:fill "#1F1E1D", :style {:opacity 0.6}, :stroke "#1F1E1D", :strokeWidth 3})
 
 (def guide-shape-visual
-  {:className "guide" :stroke "#225E79" :fill "#3BA3D0" :strokeWidth 2})
+  {:stroke "#225E79" :fill "#3BA3D0" :strokeWidth 2})
 
 (def regular-node-vis
-  {:className "reg-node" :stroke "#225E79" :fill "gray" :strokeWidth 2})
+  {:stroke "#225E79" :fill "gray" :strokeWidth 2})
 
 (def active-node-vis
-  {:className "reg-node" :stroke "#225E79" :fill "blue" :strokeWidth 2})
+  {:stroke "#225E79" :fill "blue" :strokeWidth 2})
 
 (def snap-node-vis
-  {:className "active-node" :stroke "#225E79" :fill "#FFD035" :strokeWidth 2})
+  {:stroke "#225E79" :fill "#FFD035" :strokeWidth 2})
 
 
 (def canvas-size [500 500])

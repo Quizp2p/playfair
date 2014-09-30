@@ -5,7 +5,8 @@
             [playfair-cljs.shapeDataConversion :as sdc]
             [playfair-cljs.general :as g]
             [cljs.core.async :refer [put! chan <!]]
-            [playfair-cljs.channels :as channels]))
+            [playfair-cljs.channels :as channels]
+            [playfair-cljs.debug :as debug]))
 
 
 (def node-radius 5)
@@ -15,8 +16,6 @@
    :position-attrs (sdc/attrs-to-nodes :circle {:cx x :cy y :r node-radius})
    :visual-attrs (assoc vis-attrs :onMouseDown #(put! channels/canvas-chan {:e-type :mouseDown, :e (.-nativeEvent %), :reciever :node, :shape-lookup shape-lookup :from-node from-node}))
    :active nil})
-
-
 
 (defn add-nodes [shape vis-attr shape-lookup]
    (conj (map-indexed (fn [index pos-attr]
@@ -36,7 +35,6 @@
                                                                  (if (:active shape)
                                                                      (add-nodes shape s-data/active-node-vis [shape-name index])
                                                                      (add-nodes shape s-data/snap-node-vis [shape-name index])))) shape-vec)) cs))))
-
 
 
 

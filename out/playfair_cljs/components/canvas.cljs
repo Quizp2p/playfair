@@ -31,9 +31,9 @@
            (if (and (= shape-name :path) (= (count position-attrs) 1))
              (apply dom/g nil (om/build-all render-canvas (make-x position-attrs)))
              (shape-name {:rect (dom/rect shape-attrs nil)
-                        :circle (dom/circle shape-attrs nil)
-                        :line (dom/line shape-attrs nil)
-                        :path (dom/path shape-attrs nil)}))))))
+                          :circle (dom/circle shape-attrs nil)
+                          :line (dom/line shape-attrs nil)
+                          :path (dom/path shape-attrs nil)}))))))
 
 
 

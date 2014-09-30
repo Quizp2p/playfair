@@ -32,7 +32,7 @@
 
 
 (defn render-app [app-state owner]
-  (debug/log app-state)
+  ;;(debug/log app-state)
   (reify
     om/IRender
     (render [this]
@@ -41,11 +41,11 @@
               (dom/div #js {:className "screens"}
                        (dom/svg #js {:width 100 :height 100})
                        (dom/button #js {:id "screenButton"} "+"))
-              (dom/div #js {:className "steps"}
+              (dom/div #js {:className "stepsAndData"}
                      (dom/p #js {:className "center"} "Data")
                      (apply dom/table nil (om/build-all data/render-data (:data app-state)))
                      (dom/p #js {:className "center"} "Steps")
-                     (apply dom/div nil (om/build-all step/render-step steps)))
+                     (apply dom/div #js {:className "steps"} (om/build-all step/render-step steps)))
               (dom/div #js {:className "canvas"}
                     (dom/div #js {:id "mainCanvas"}
                      (om/build scrub/make-scrub app-state)
@@ -83,7 +83,14 @@
 
 
 ;; e.preventDefault();
-(events/listen js/document "keydown" #(put! keylistener/key-chan [:keydown %]))
-(events/listen js/document "keyup" #(put! keylistener/key-chan  [:keyup %] ))
+(events/listen js/document "keydown" (fn [e]
+                                       (do
+                                         (.preventDefault e)
+                                         (put! keylistener/key-chan [:keydown e]))))
+
+(events/listen js/document "keyup" (fn [e]
+                                       (do
+                                         (.preventDefault e)
+                                         (put! keylistener/key-chan [:keyup e]))))
 (events/listen js/document "mousemove" #(put! channels/global-chan  {:e-type :mouseMove, :e %}))
 (events/listen js/document "mouseup" #(put! channels/global-chan  {:e-type :mouseUp, :e %}))

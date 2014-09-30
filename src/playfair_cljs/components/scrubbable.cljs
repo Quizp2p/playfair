@@ -57,7 +57,7 @@
 
 
 (defn get-scrub-step [[a-s1 a-s2] steps]
-  ;;(debug/log [[a-s1 a-s2] (vector? a-s2)])
+  ;;(debug/log [a-s1 a-s2 steps])
   (if (number? a-s2)
     (steps a-s2)
     ((:for-steps (steps (a-s2 0))) (a-s2 2))))
@@ -69,6 +69,8 @@
               (if (> (count steps) 0)
                 (apply dom/p #js {:className "center"} (make-scrub-text (get-scrub-step active-steps steps)))
                 (dom/p {:className "center"} "")))))
+
+
 
 
 
