@@ -18,7 +18,7 @@
                       (let [[cs text active?] step]
                        (dom/div #js {:className (if active? "activeStepContainer" "stepContainer") }
                         (dom/p #js {:className "stepText"} text)
-                        (apply dom/svg #js {:width 100 :height 100 :viewBox (str "0 0 " (s-data/canvas-size 0) " " (s-data/canvas-size 1))  :className "stepSVG"}
+                        (apply dom/svg #js {:width (/ (s-data/canvas-size 0) 6) :height (/ (s-data/canvas-size 1) 6) :viewBox (str "0 0 " (s-data/canvas-size 0) " " (s-data/canvas-size 1))  :className "stepSVG"}
                                  (om/build-all canvas/render-canvas (asc/make-renderable cs)))))))))
 
 

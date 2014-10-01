@@ -10,17 +10,27 @@
   user-select: none;
 }
 
-html {
-    /*height:100%;*/
-    width: 100%;
+
+
+html, body {
+    margin: 0;
 }
+
+
+
+.inline {
+  display: inline;
+}
+
+.left-panel {
+  width: 300px;
+}
+
 
 body {
   font: 13px verdana;
   background-color: #d6d6d6;
-  /*height:100%;*/
-  width: 100%;
-  /*overflow: hidden;*/
+
 }
 
 td {
@@ -42,7 +52,6 @@ ul {
 }
 
 #screenButton {
-  text-align: middle;
   color: #777;
   font-weight: bold;
   font-size: 15px;
@@ -60,8 +69,14 @@ ul {
 }
 
 .stepContainer {
-  height: 110px;
+  height: 100px;
+  padding: 10px;
+}
 
+.activeStepContainer {
+  background-color: #6A90D2;
+  height: 100px;
+  padding: 10px;
 }
 
 .center {
@@ -71,7 +86,7 @@ ul {
 .stepText {
   text-align: center;
   float: left;
-  width: 200px;
+  width: 180px;
 
 }
 
@@ -85,76 +100,9 @@ ul {
   width: 100px;
 }
 
-.shape {
-    opacity: 0.6;
-}
-
-.screens {
-  position: absolute;
-  left: 0px;
-  top: 0px;
-  height: 120;
-  width: 100%;
-}
-
 .steps {
-  height: 100%;
   overflow: scroll;
-}
-
-.stepsAndData {
-  position: absolute;
-  left: 0px;
-  top: 120px;
-  width: 300px;
-  height: 400px;
-}
-
-.unselectable {
-   -moz-user-select: -moz-none;
-   -khtml-user-select: none;
-   -webkit-user-select: none;
-
-   /*
-     Introduced in IE 10.
-     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
-   */
-   -ms-user-select: none;
-   user-select: none;
-}
-
-p {
-  -moz-user-select: -moz-none;
-  -khtml-user-select: none;
-  -webkit-user-select: none;
-
-  /*
-    Introduced in IE 10.
-    See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
-  */
-  -ms-user-select: none;
-  user-select: none;
-}
-
-.commands {
-  position: absolute;
-  left: 900px;
-  top: 120px;
-  width: 200px;
-  /*height:100%;*/
-}
-
-.canvas {
-  position: absolute;
-  left: 300px;
-  top: 120px;
-  width: 600px;
-  /*height:100%;*/
-}
-
-#mainCanvas {
-  margin: 0 auto;
-  width: 500px;
+  height: 450px;
 }
 
 .right {
@@ -164,10 +112,6 @@ p {
   text-align: left;
 }
 
-.activeStepContainer {
-  background-color: #6A90D2;
-  height: 110px;
-}
 
 .activeSpecialText {
   background-color: #6A90D2;
@@ -175,6 +119,17 @@ p {
 
 .keypress {
   background-color: #FF7D02;
+}
+
+.container {
+  display: flex; /* or inline-flex */
+  margin: 10px;
+
+}
+
+.container-around {
+  display: flex; /* or inline-flex */
+  justify-content: space-around;
 }
 
 

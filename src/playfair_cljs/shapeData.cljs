@@ -20,7 +20,7 @@
   {:stroke "#225E79" :fill "#FFD035" :strokeWidth 2})
 
 
-(def canvas-size [500 500])
+(def canvas-size [600 480])
 
 (def canvas-nodes
   (sdc/get-rect-node-points {:x 0 :y 0 :width (canvas-size 0) :height (canvas-size 1)}))

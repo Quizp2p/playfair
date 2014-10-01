@@ -37,16 +37,18 @@
     om/IRender
     (render [this]
             (let [steps (asc/app-state-to-steps app-state)]
-            (dom/div nil
-              (dom/div #js {:className "screens"}
-                       (dom/svg #js {:width 100 :height 100})
+            (dom/div #js {:className "proper-height"}
+              (dom/div #js {:className "container"}
+                       (dom/svg #js {:width (/ (s-data/canvas-size 0) 6) :height (/ (s-data/canvas-size 1) 6)})
                        (dom/button #js {:id "screenButton"} "+"))
-              (dom/div #js {:className "stepsAndData"}
+             (dom/div #js {:className "container-around"}
+
+             (dom/div #js {:className "left-panel"}
                      (dom/p #js {:className "center"} "Data")
                      (apply dom/table nil (om/build-all data/render-data (:data app-state)))
                      (dom/p #js {:className "center"} "Steps")
                      (apply dom/div #js {:className "steps"} (om/build-all step/render-step steps)))
-              (dom/div #js {:className "canvas"}
+              (dom/div nil
                     (dom/div #js {:id "mainCanvas"}
                      (om/build scrub/make-scrub app-state)
                        (let [last-state (-> steps last asc/get-last-state)
@@ -58,9 +60,10 @@
                                              :height (s-data/canvas-size 1)
                                              :id "bigCanvas"}
                                 (om/build-all canvas/render-canvas (-> last-state (csc/check-nodes (:key-state app-state))))))))
-              (dom/div #js {:className "commands"}
+              (dom/div nil
                       (apply dom/div nil
-                             (om/build-all commands/render-command-section (map (fn [key-vec] (conj key-vec (:key-state app-state))) commands/command-list))))
+                             (om/build-all commands/render-command-section (map (fn [key-vec] (conj key-vec (:key-state app-state))) commands/command-list)))))
+
                (dom/div nil (om/build keylistener/key-listener-component app-state))
                (dom/div nil (om/build ca/canvas-events app-state))
                (dom/div nil (om/build scrub/global-events app-state)))))))

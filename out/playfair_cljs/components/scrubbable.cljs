@@ -68,7 +68,7 @@
       (render [this]
               (if (> (count steps) 0)
                 (apply dom/p #js {:className "center"} (make-scrub-text (get-scrub-step active-steps steps)))
-                (dom/p {:className "center"} "")))))
+                (dom/p #js {:className "center"} "Welcome to playfair, get drawing!")))))
 
 
 
