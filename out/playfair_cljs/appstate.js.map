@@ -4,7 +4,7 @@
  "sources":["appstate.cljs"],
  "lineCount":7,
  "mappings":
- ";AAAA;;AAGA,AAAKA,mCAAU,yBAAA,2CAAA,qEAAA,mFAAA,EAAA,UAAA,yEAAA,KAAA,uDAAA,iCAAA,+DAAA,yDAAA,qDAAA,2CAAA,iEAAA,GAAA,1qBAACC,muBASqB,MAAA,LAAGC;AAGxC,AAAKC,mCAAU,yBAAA,2CAAA,kEAAA,MAAA,yEAAA,mFAAA,EAAA,UAAA,qEAAA,mFAAA,EAAA,UAAA,0EAAA,KAAA,qEAAA,5mBAACF",
+ ";AAAA;;AAGA,AAAKA,mCAAU,yBAAA,2CAAA,qEAAA,mFAAA,EAAA,UAAA,yEAAA,KAAA,uDAAA,iCAAA,+DAAA,yDAAA,qDAAA,2CAAA,iFAAA,vrBAACC;AAWhB,AAAKC,mCAAU,yBAAA,2CAAA,kEAAA,MAAA,yEAAA,mFAAA,EAAA,UAAA,qEAAA,mFAAA,EAAA,UAAA,0EAAA,KAAA,qEAAA,5mBAACD",
  "names":
- ["playfair-cljs.appstate/app-state", "cljs.core/atom", "/5",
+ ["playfair-cljs.appstate/app-state", "cljs.core/atom",
   "playfair-cljs.appstate/gui-state"]}

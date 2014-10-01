@@ -41,11 +41,12 @@
               (dom/div #js {:className "container"}
                        (dom/svg #js {:width (/ (s-data/canvas-size 0) 6) :height (/ (s-data/canvas-size 1) 6)})
                        (dom/button #js {:id "screenButton"} "+"))
-             (dom/div #js {:className "container-around"}
+
+            (dom/div #js {:className "container-around"}
 
              (dom/div #js {:className "left-panel"}
-                     (dom/p #js {:className "center"} "Data")
-                     (apply dom/table nil (om/build-all data/render-data (:data app-state)))
+                    ;; (dom/p #js {:className "center"} "Data")
+                    ;; (apply dom/table nil (om/build-all data/render-data (:data app-state)))
                      (dom/p #js {:className "center"} "Steps")
                      (apply dom/div #js {:className "steps"} (om/build-all step/render-step steps)))
               (dom/div nil

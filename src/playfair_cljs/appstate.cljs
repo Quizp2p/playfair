@@ -9,8 +9,7 @@
 
                       :key-state :select
 
-                      :data {:iterations 10
-                             :points (/ .5 8)}}))
+                      :data {:under-construction ""}}))
 
 
 (def gui-state (atom {:mouse-down? false
