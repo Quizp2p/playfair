@@ -20,4 +20,4 @@ Things you can currently do:
 
 ![alt tag](pictures/snap.png)
 
-I built this project because I wanted to use the tool in Bret's video, and to gain a better understanding of clojurescript. If you have any suggestions for improving the code send me an email at zindlerb@gmail.com to check out other projects I've done visit [www.zindlerb.com](www.zindlerb.com).
+I built this project because I wanted to use the tool in Bret's video, and to gain a better understanding of clojurescript. If you have any suggestions for improving the code send me an email at zindlerb@gmail.com to check out other projects I've done visit [www.zindlerb.com](http://www.zindlerb.com).
