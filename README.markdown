@@ -8,7 +8,7 @@ Be warned, this is a work in progress. It is buggy, incomplete, and sometimes la
 
 Currently you can draw the basic svg shapes. You can snap all of the shapes except for path. You can adjust the shapes. in the ways listed on the panel.
 
-![alt tag](pictures/playfair_slide_demo.gif)
+![alt tag](pictures/twirl.png)
 
 Things you can currently do:
 
