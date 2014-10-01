@@ -8,7 +8,7 @@ Be warned, this is a work in progress. It is buggy, incomplete, and sometimes la
 
 Currently you can draw the basic svg shapes. You can snap all of the shapes except for path. You can adjust the shapes. in the ways listed on the panel.
 
-![alt tag](pictures/change_params.gif)
+![alt tag](pictures/playfair_slide_demo.gif)
 
 Things you can currently do:
 
@@ -18,5 +18,6 @@ Things you can currently do:
 - use shift up or down to select multiple steps, then hit l to loop over the steps.
 - use up or down to go to different steps. Hover and drag the numbers to change the step parameters.
 
+![alt tag](pictures/loop_playfair.gif)
 
 I built this project because I wanted to use the tool in Bret's video, and to gain a better understanding of clojurescript. If you have any suggestions for improving the code send me an email at zindlerb@gmail.com to check out other projects I've done visit [www.zindlerb.com](www.zindlerb.com).
