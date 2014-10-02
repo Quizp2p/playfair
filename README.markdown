@@ -6,7 +6,7 @@ Right now it is a direct copy of the tool Bret presents, but I hope to make some
 
 Be warned, this is a work in progress. It is buggy, incomplete, and sometimes laggy.
 
-Currently you can draw the basic svg shapes. You can snap all of the shapes except for path. You can adjust the shapes. in the ways listed on the panel.
+To use download the files off github, and open the index.html file.
 
 ![alt tag](pictures/twirl.png)
 
