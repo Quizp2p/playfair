@@ -6,7 +6,7 @@ Right now it is a direct copy of the tool Bret presents, but I hope to make some
 
 Be warned, this is a work in progress. It is buggy, incomplete, and sometimes laggy.
 
-To use download the files off github, and open the index.html file.
+To use download the files off github, and open the index.html file. Hold down one of the draw keys to draw a shape. Hold down one of the adjust keys, and click on a node to adjust the shapes.
 
 ![alt tag](pictures/twirl.png)
 
