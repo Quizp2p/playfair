@@ -129,7 +129,7 @@
                                                                                                  (let [snapped-list (check-snap canvas-m-pos (asc/get-last-cs @state/app-state) [:path (:path-index (last steps))] )]
 
                                                                                                      (conj (g/safe-pop steps) (if (empty? snapped-list)
-                                                                                                                                  (assoc (last steps) :x c-m-x :y c-m-y)
+                                                                                                                                  (assoc (dissoc (last steps) :to-node :to-shape) :x c-m-x :y c-m-y)
                                                                                                                                   (assoc (dissoc (last steps) :x :y) :to-node ((first snapped-list) 0) :to-shape ((first snapped-list) 1))))))))))
 
      (= e-type :mouseDown) (do (swap! state/gui-state (fn [gui-state] (g/multi-assoc gui-state [:mouse-down-pos [(- (.-clientX e) target-x) (- (.-clientY e) target-y)]]
@@ -177,7 +177,6 @@
     om/IRender
     (render [this]
       (dom/div nil ""))))
-
 
 
 
