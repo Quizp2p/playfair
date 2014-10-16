@@ -22,11 +22,16 @@
      (and (= e-type :mouseMove) (:scrub-click-pos @state/gui-state))
                                      (om/transact! app-state (fn [{:keys [steps active-steps] :as app-state}]
                                                                  (let [{:keys [scrub-click-pos scrub-step-key scrub-start-val]} @state/gui-state
-                                                                       sensitivity  1
-                                                                       decimal 1]
+                                                                       sensitivity 1
+                                                                       [as-1 as-2] active-steps
+                                                                       scrubbed-step (get-in steps (if (number? as-2) [as-2] [(as-2 0) :for-steps (as-2 2)]))
+                                                                       decimal (cond
+                                                                                (= (:step-name scrubbed-step) :rotate) .01
+                                                                                (= (:step-name scrubbed-step) :scale) .01
+                                                                                :else 1)]
                                                                    (assoc-in app-state (if (number? (active-steps 1))
-                                                                                                    [:steps (active-steps 1) scrub-step-key]
-                                                                                                    [:steps ((active-steps 1) 0) :for-steps ((active-steps 1) 2) scrub-step-key])  (+ scrub-start-val (* (quot (- (.-clientX e) (scrub-click-pos 0)) sensitivity) decimal)  )))))
+                                                                                                    [:steps as-2 scrub-step-key]
+                                                                                                    [:steps (as-2 0) :for-steps (as-2 2) scrub-step-key])  (+ scrub-start-val (* (quot (- (.-clientX e) (scrub-click-pos 0)) sensitivity) decimal)  )))))
      (and (= e-type :mouseUp) (:scrub-click-pos @state/gui-state)) (swap! state/gui-state (fn [gui-state] (assoc gui-state :scrub-click-pos nil)))))
 
 

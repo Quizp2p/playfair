@@ -85,6 +85,7 @@
           {:vis-attrs vis-attrs}
           nil)))
 
+
 (defn make-path-extend [path-index p-type n-x n-y]
  (conj {:step-name :path-extend
        :path-index path-index

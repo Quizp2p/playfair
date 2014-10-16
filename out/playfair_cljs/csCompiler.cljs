@@ -125,14 +125,18 @@
                     {:x (* (math/cos radian) r) :y (* (math/sin radian) r)})))
 
 (defn snap [cs node s-lookup]
+ (debug/log [cs node s-lookup])
  (let [{:keys [x y]} (cond
                        (= :canvas s-lookup) (if (vector? node)
                                               (glomp :rect s-data/canvas-nodes (node 1) )
                                               (node s-data/canvas-nodes))
                        (vector? node) (glomp (s-lookup 0) (get-in cs [(s-lookup 0) (s-lookup 1) :position-attrs]) (node 1))
 
-                       :else (let [[s-key s-index] s-lookup]
-                               (get-in cs [s-key s-index :position-attrs node])))]
+                       :else (let [[s-key s-index] s-lookup
+                                   node-pos (get-in cs [s-key s-index :position-attrs node])]
+                               (if (number? node)
+                                 {:x (node-pos 1) :y (node-pos 2)}
+                                 node-pos)))]
    [x y]))
 
 (defn get-snap-name [snap-vec]
@@ -186,10 +190,10 @@
 
 (defmethod get-cs-fn :path-extend [{:keys [path-index p-type x y to-shape to-node]}]
   (fn [canvas-state]
-    (g/conj-in canvas-state [:path path-index :position-attrs] (if to-shape
-                                                             (let [[x y] (snap canvas-state to-node to-shape)]
-                                                                   [p-type x y])
-                                                             [p-type x y]))))
+    (g/conj-in canvas-state [:path path-index :position-attrs] (if to-node
+                                                                     (let [[x y] (snap canvas-state to-node to-shape)]
+                                                                           [p-type x y])
+                                                                     [p-type x y]))))
 
 
 
@@ -262,17 +266,21 @@
 
 (defmulti get-text :step-name)
 
+(defn print-node [node]
+  (if (keyword? node)
+    (name node)
+    (str "point " node)))
 
 (defmethod get-text :draw
   [{:keys [shape from-node from-shape x y to-node to-shape diffX diffY scrub?]}]
   (let [dec-places 1
         text (concat ["Draw " (name shape)]
                                 (if from-node
-                                  [" at " (get-snap-name from-shape) "'s " (name from-node) " "]
+                                  [" at " (get-snap-name from-shape) "'s " (print-node from-node) " "]
                                   [" from (" (if scrub? {:value (math/round x dec-places) :step-key :x} (math/round x dec-places))
                                 ", " (if scrub? {:value (math/round y dec-places) :step-key :y} (math/round y dec-places)) ") "])
                                 (if to-node
-                                  ["to " (get-snap-name to-shape) "'s " (name to-node)]
+                                  ["to " (get-snap-name to-shape) "'s " (print-node to-node)]
                                   [(if scrub? {:value (math/round diffX dec-places) :step-key :diffX} (math/round diffX dec-places))
                                   "px horizontally "
                                   (if scrub? {:value (math/round diffY dec-places) :step-key :diffY} (math/round diffY dec-places))
@@ -289,7 +297,7 @@
 
 
 (defmethod get-text :rotate
-  [{:keys [shape-lookup node rotate-val]} scrub?]
+  [{:keys [shape-lookup node rotate-val scrub?]}]
   (let [[shape-key index] shape-lookup
         add-text-data (fn [r-val] ["Rotate " (get-snap-name [shape-key index])
                                      " around " (get-snap-name [shape-key index])
@@ -304,13 +312,13 @@
 (defmethod get-text :path-start
   [{:keys [x y from-shape from-node scrub?]}]
      (let [text (concat ["Start path "] (if from-shape  ["at " (name (from-shape 0)) (from-shape 1) "'s " from-node]
-                                             [(if scrub? {:value x :step-key :x} x) "px horizontally " (if scrub? {:value x :step-key :x} y) "px vertically"]))]
+                                             [(if scrub? {:value x :step-key :x} x) "px horizontally " (if scrub? {:value y :step-key :y} y) "px vertically"]))]
       (if scrub? text (reduce str text))))
 
 
 
 (defmethod get-text :path-extend
-  [{:keys [path-index p-type x y to-shape to-node scrub?]}]
+  [{:keys [path-index p-type x y to-node to-shape scrub?]}]
     (let [p-t-lookup {"L" "line"
                       "H" "horizontal line"
                       "V" "vertical line"

@@ -124,7 +124,13 @@
                                                                                                      new-dist (bmath/distance-formula [(:x from-node) (:y from-node)] [c-m-x c-m-y])]
                                                                                                      (conj (g/safe-pop steps) (assoc (last steps) :scale-val (/ new-dist original-dist))))))
                                   (= in-progress? :path) (debug/log "WOW you are dragging a path")
-                                  (= in-progress? :path-extend) (om/transact! app-state :steps (fn [steps] (conj (g/safe-pop steps) (assoc (last steps) :x c-m-x :y c-m-y)))))))
+
+                                  (= in-progress? :path-extend) (om/transact! app-state :steps (fn [steps]
+                                                                                                 (let [snapped-list (check-snap canvas-m-pos (asc/get-last-cs @state/app-state) [:path (:path-index (last steps))] )]
+
+                                                                                                     (conj (g/safe-pop steps) (if (empty? snapped-list)
+                                                                                                                                  (assoc (last steps) :x c-m-x :y c-m-y)
+                                                                                                                                  (assoc (dissoc (last steps) :x :y) :to-node ((first snapped-list) 0) :to-shape ((first snapped-list) 1))))))))))
 
      (= e-type :mouseDown) (do (swap! state/gui-state (fn [gui-state] (g/multi-assoc gui-state [:mouse-down-pos [(- (.-clientX e) target-x) (- (.-clientY e) target-y)]]
                                                                                              [:mouse-down? true])))
@@ -145,7 +151,8 @@
                                        (and (= :path (:key-state @state/app-state)) (= reciever :canvas)) (let [p-start (check-path-start [c-m-x c-m-y] (asc/get-last-cs @state/app-state))]
                                                                                                                  (mouse-down-action app-state (if (> (count p-start) 0)
                                                                                                                                                   (s-data/make-path-extend (((first p-start) 1) 1) "L" c-m-x c-m-y)
-                                                                                                                                                  (s-data/make-path-start c-m-x c-m-y nil nil))
+                                                                                                                                                  (let [[s-x s-y] (check-snap-at-mouse canvas-m-pos (asc/get-last-cs @state/app-state))]
+                                                                                                                                                    (s-data/make-path-start s-x s-y nil nil)))
                                                                                                                                               (if (> (count p-start) 0)
                                                                                                                                                   :path-extend
                                                                                                                                                   :path))))))
@@ -153,8 +160,6 @@
      (= e-type :mouseUp) (do (swap! state/gui-state (fn [gui-state]
                                                     (g/multi-assoc gui-state [:mouse-down? false] [:in-progress? false] [:in-progress? false])))
                              (om/transact! app-state :key-state (fn [ks] :select))))))
-
-
 
 
 
