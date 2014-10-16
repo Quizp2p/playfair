@@ -13,7 +13,7 @@ To use download the files off github, and open the index.html file. Hold down on
 Things you can currently do:
 
 - draw the basic svg shapes.
-- snap all of the shapes except for path.
+- snap all of the shapes.
 - rotate, scale, and move the shapes.
 - use shift up or down to select multiple steps, then hit l to loop over the steps.
 - use up or down to go to different steps. Hover and drag the numbers to change the step parameters.
