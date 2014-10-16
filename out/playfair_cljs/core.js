@@ -44,43 +44,44 @@ playfair_cljs.core.add_shape_events = (function add_shape_events(r_shapes){retur
 }));
 }),r_shapes);
 });
-playfair_cljs.core.render_app = (function render_app(app_state,owner){if(typeof playfair_cljs.core.t9741 !== 'undefined')
+playfair_cljs.core.render_app = (function render_app(app_state,owner){if(typeof playfair_cljs.core.t9730 !== 'undefined')
 {} else
 {
 /**
 * @constructor
 */
-playfair_cljs.core.t9741 = (function (owner,app_state,render_app,meta9742){
+playfair_cljs.core.t9730 = (function (owner,app_state,render_app,meta9731){
 this.owner = owner;
 this.app_state = app_state;
 this.render_app = render_app;
-this.meta9742 = meta9742;
+this.meta9731 = meta9731;
 this.cljs$lang$protocol_mask$partition1$ = 0;
 this.cljs$lang$protocol_mask$partition0$ = 393216;
 })
-playfair_cljs.core.t9741.cljs$lang$type = true;
-playfair_cljs.core.t9741.cljs$lang$ctorStr = "playfair-cljs.core/t9741";
-playfair_cljs.core.t9741.cljs$lang$ctorPrWriter = (function (this__4008__auto__,writer__4009__auto__,opt__4010__auto__){return cljs.core._write.call(null,writer__4009__auto__,"playfair-cljs.core/t9741");
+playfair_cljs.core.t9730.cljs$lang$type = true;
+playfair_cljs.core.t9730.cljs$lang$ctorStr = "playfair-cljs.core/t9730";
+playfair_cljs.core.t9730.cljs$lang$ctorPrWriter = (function (this__4008__auto__,writer__4009__auto__,opt__4010__auto__){return cljs.core._write.call(null,writer__4009__auto__,"playfair-cljs.core/t9730");
 });
-playfair_cljs.core.t9741.prototype.om$core$IRender$ = true;
-playfair_cljs.core.t9741.prototype.om$core$IRender$render$arity$1 = (function (this$){var self__ = this;
-var this$__$1 = this;var steps = playfair_cljs.asCompiler.app_state_to_steps.call(null,self__.app_state);return React.DOM.div({"className": "proper-height"},React.DOM.div({"className": "container"},React.DOM.svg({"height": (playfair_cljs.shapeData.canvas_size.call(null,1) / 6), "width": (playfair_cljs.shapeData.canvas_size.call(null,0) / 6)}),React.DOM.button({"id": "screenButton"},"+")),React.DOM.div({"className": "container-around"},React.DOM.div({"className": "left-panel"},React.DOM.p({"className": "center"},"Steps"),cljs.core.apply.call(null,om.dom.div,{"className": "steps"},om.core.build_all.call(null,playfair_cljs.components.step.render_step,steps))),React.DOM.div(null,React.DOM.div({"id": "mainCanvas"},om.core.build.call(null,playfair_cljs.components.scrubbable.make_scrub,self__.app_state),(function (){var last_state = playfair_cljs.asCompiler.get_last_state.call(null,cljs.core.last.call(null,steps));var second_last_state = playfair_cljs.asCompiler.get_last_state.call(null,cljs.core.last.call(null,playfair_cljs.general.safe_pop.call(null,steps)));return cljs.core.apply.call(null,om.dom.svg,{"id": "bigCanvas", "height": playfair_cljs.shapeData.canvas_size.call(null,1), "width": playfair_cljs.shapeData.canvas_size.call(null,0), "onMouseUp": (function (p1__9737_SHARP_){return cljs.core.async.put_BANG_.call(null,playfair_cljs.channels.canvas_chan,new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"e-type","e-type",3950582548),new cljs.core.Keyword(null,"mouseUp","mouseUp",2256971154),new cljs.core.Keyword(null,"e","e",1013904343),p1__9737_SHARP_.nativeEvent,new cljs.core.Keyword(null,"reciever","reciever",4503726569),new cljs.core.Keyword(null,"canvas","canvas",3941165258),new cljs.core.Keyword(null,"second-last-state","second-last-state",4343999749),second_last_state], null));
-}), "onMouseDown": (function (p1__9736_SHARP_){return cljs.core.async.put_BANG_.call(null,playfair_cljs.channels.canvas_chan,new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"e-type","e-type",3950582548),new cljs.core.Keyword(null,"mouseDown","mouseDown",1599794777),new cljs.core.Keyword(null,"e","e",1013904343),p1__9736_SHARP_.nativeEvent,new cljs.core.Keyword(null,"reciever","reciever",4503726569),new cljs.core.Keyword(null,"canvas","canvas",3941165258),new cljs.core.Keyword(null,"second-last-state","second-last-state",4343999749),second_last_state], null));
-}), "onMouseMove": (function (p1__9735_SHARP_){return cljs.core.async.put_BANG_.call(null,playfair_cljs.channels.canvas_chan,new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"e-type","e-type",3950582548),new cljs.core.Keyword(null,"mouseMove","mouseMove",1600062856),new cljs.core.Keyword(null,"e","e",1013904343),p1__9735_SHARP_.nativeEvent,new cljs.core.Keyword(null,"reciever","reciever",4503726569),new cljs.core.Keyword(null,"canvas","canvas",3941165258),new cljs.core.Keyword(null,"second-last-state","second-last-state",4343999749),second_last_state], null));
+playfair_cljs.core.t9730.prototype.om$core$IRender$ = true;
+playfair_cljs.core.t9730.prototype.om$core$IRender$render$arity$1 = (function (this$){var self__ = this;
+var this$__$1 = this;var steps = playfair_cljs.asCompiler.app_state_to_steps.call(null,self__.app_state);return React.DOM.div({"className": "proper-height"},React.DOM.div({"className": "container"},React.DOM.svg({"height": (playfair_cljs.shapeData.canvas_size.call(null,1) / 6), "width": (playfair_cljs.shapeData.canvas_size.call(null,0) / 6)}),React.DOM.button({"id": "screenButton"},"+")),React.DOM.div({"className": "container-around"},React.DOM.div({"className": "left-panel"},React.DOM.p({"className": "center"},"Steps"),cljs.core.apply.call(null,om.dom.div,{"className": "steps"},om.core.build_all.call(null,playfair_cljs.components.step.render_step,steps))),React.DOM.div(null,React.DOM.div({"id": "mainCanvas"},om.core.build.call(null,playfair_cljs.components.scrubbable.make_scrub,self__.app_state),(function (){var last_state = playfair_cljs.asCompiler.get_last_state.call(null,cljs.core.last.call(null,steps));var second_last_state = playfair_cljs.asCompiler.get_last_state.call(null,cljs.core.last.call(null,playfair_cljs.general.safe_pop.call(null,steps)));playfair_cljs.debug.log.call(null,last_state);
+return cljs.core.apply.call(null,om.dom.svg,{"id": "bigCanvas", "height": playfair_cljs.shapeData.canvas_size.call(null,1), "width": playfair_cljs.shapeData.canvas_size.call(null,0), "onMouseUp": (function (p1__9726_SHARP_){return cljs.core.async.put_BANG_.call(null,playfair_cljs.channels.canvas_chan,new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"e-type","e-type",3950582548),new cljs.core.Keyword(null,"mouseUp","mouseUp",2256971154),new cljs.core.Keyword(null,"e","e",1013904343),p1__9726_SHARP_.nativeEvent,new cljs.core.Keyword(null,"reciever","reciever",4503726569),new cljs.core.Keyword(null,"canvas","canvas",3941165258),new cljs.core.Keyword(null,"second-last-state","second-last-state",4343999749),second_last_state], null));
+}), "onMouseDown": (function (p1__9725_SHARP_){return cljs.core.async.put_BANG_.call(null,playfair_cljs.channels.canvas_chan,new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"e-type","e-type",3950582548),new cljs.core.Keyword(null,"mouseDown","mouseDown",1599794777),new cljs.core.Keyword(null,"e","e",1013904343),p1__9725_SHARP_.nativeEvent,new cljs.core.Keyword(null,"reciever","reciever",4503726569),new cljs.core.Keyword(null,"canvas","canvas",3941165258),new cljs.core.Keyword(null,"second-last-state","second-last-state",4343999749),second_last_state], null));
+}), "onMouseMove": (function (p1__9724_SHARP_){return cljs.core.async.put_BANG_.call(null,playfair_cljs.channels.canvas_chan,new cljs.core.PersistentArrayMap(null, 4, [new cljs.core.Keyword(null,"e-type","e-type",3950582548),new cljs.core.Keyword(null,"mouseMove","mouseMove",1600062856),new cljs.core.Keyword(null,"e","e",1013904343),p1__9724_SHARP_.nativeEvent,new cljs.core.Keyword(null,"reciever","reciever",4503726569),new cljs.core.Keyword(null,"canvas","canvas",3941165258),new cljs.core.Keyword(null,"second-last-state","second-last-state",4343999749),second_last_state], null));
 })},om.core.build_all.call(null,playfair_cljs.components.canvas.render_canvas,playfair_cljs.csCompiler.check_nodes.call(null,last_state,new cljs.core.Keyword(null,"key-state","key-state",2231822101).cljs$core$IFn$_invoke$arity$1(self__.app_state))));
 })())),React.DOM.div(null,cljs.core.apply.call(null,om.dom.div,null,om.core.build_all.call(null,playfair_cljs.components.commands.render_command_section,cljs.core.map.call(null,(function (key_vec){return cljs.core.conj.call(null,key_vec,new cljs.core.Keyword(null,"key-state","key-state",2231822101).cljs$core$IFn$_invoke$arity$1(self__.app_state));
 }),playfair_cljs.components.commands.command_list))))),React.DOM.div(null,om.core.build.call(null,playfair_cljs.components.keypress.key_listener_component,self__.app_state)),React.DOM.div(null,om.core.build.call(null,playfair_cljs.components.canvasEvents.canvas_events,self__.app_state)),React.DOM.div(null,om.core.build.call(null,playfair_cljs.components.scrubbable.global_events,self__.app_state)));
 });
-playfair_cljs.core.t9741.prototype.cljs$core$IMeta$_meta$arity$1 = (function (_9743){var self__ = this;
-var _9743__$1 = this;return self__.meta9742;
+playfair_cljs.core.t9730.prototype.cljs$core$IMeta$_meta$arity$1 = (function (_9732){var self__ = this;
+var _9732__$1 = this;return self__.meta9731;
 });
-playfair_cljs.core.t9741.prototype.cljs$core$IWithMeta$_with_meta$arity$2 = (function (_9743,meta9742__$1){var self__ = this;
-var _9743__$1 = this;return (new playfair_cljs.core.t9741(self__.owner,self__.app_state,self__.render_app,meta9742__$1));
+playfair_cljs.core.t9730.prototype.cljs$core$IWithMeta$_with_meta$arity$2 = (function (_9732,meta9731__$1){var self__ = this;
+var _9732__$1 = this;return (new playfair_cljs.core.t9730(self__.owner,self__.app_state,self__.render_app,meta9731__$1));
 });
-playfair_cljs.core.__GT_t9741 = (function __GT_t9741(owner__$1,app_state__$1,render_app__$1,meta9742){return (new playfair_cljs.core.t9741(owner__$1,app_state__$1,render_app__$1,meta9742));
+playfair_cljs.core.__GT_t9730 = (function __GT_t9730(owner__$1,app_state__$1,render_app__$1,meta9731){return (new playfair_cljs.core.t9730(owner__$1,app_state__$1,render_app__$1,meta9731));
 });
 }
-return (new playfair_cljs.core.t9741(owner,app_state,render_app,null));
+return (new playfair_cljs.core.t9730(owner,app_state,render_app,null));
 });
 om.core.root.call(null,playfair_cljs.core.render_app,playfair_cljs.appstate.app_state,new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"target","target",4427965699),document.getElementById("app"),new cljs.core.Keyword(null,"shared","shared",4405305303),new cljs.core.PersistentArrayMap(null, 3, [new cljs.core.Keyword(null,"keychan","keychan",4493860259),playfair_cljs.components.keypress.key_chan,new cljs.core.Keyword(null,"canchan","canchan",1564122772),playfair_cljs.channels.canvas_chan,new cljs.core.Keyword(null,"globalchan","globalchan",4450549991),playfair_cljs.channels.global_chan], null)], null));
 playfair_cljs.core.big_c_pos = (function (){var rect = document.getElementById("bigCanvas").getBoundingClientRect();return new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [rect.left,rect.top], null);
@@ -91,9 +92,9 @@ return cljs.core.async.put_BANG_.call(null,playfair_cljs.components.keypress.key
 goog.events.listen(document,"keyup",(function (e){e.preventDefault();
 return cljs.core.async.put_BANG_.call(null,playfair_cljs.components.keypress.key_chan,new cljs.core.PersistentVector(null, 2, 5, cljs.core.PersistentVector.EMPTY_NODE, [new cljs.core.Keyword(null,"keyup","keyup",1115849900),e], null));
 }));
-goog.events.listen(document,"mousemove",(function (p1__9744_SHARP_){return cljs.core.async.put_BANG_.call(null,playfair_cljs.channels.global_chan,new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"e-type","e-type",3950582548),new cljs.core.Keyword(null,"mouseMove","mouseMove",1600062856),new cljs.core.Keyword(null,"e","e",1013904343),p1__9744_SHARP_], null));
+goog.events.listen(document,"mousemove",(function (p1__9733_SHARP_){return cljs.core.async.put_BANG_.call(null,playfair_cljs.channels.global_chan,new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"e-type","e-type",3950582548),new cljs.core.Keyword(null,"mouseMove","mouseMove",1600062856),new cljs.core.Keyword(null,"e","e",1013904343),p1__9733_SHARP_], null));
 }));
-goog.events.listen(document,"mouseup",(function (p1__9745_SHARP_){return cljs.core.async.put_BANG_.call(null,playfair_cljs.channels.global_chan,new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"e-type","e-type",3950582548),new cljs.core.Keyword(null,"mouseUp","mouseUp",2256971154),new cljs.core.Keyword(null,"e","e",1013904343),p1__9745_SHARP_], null));
+goog.events.listen(document,"mouseup",(function (p1__9734_SHARP_){return cljs.core.async.put_BANG_.call(null,playfair_cljs.channels.global_chan,new cljs.core.PersistentArrayMap(null, 2, [new cljs.core.Keyword(null,"e-type","e-type",3950582548),new cljs.core.Keyword(null,"mouseUp","mouseUp",2256971154),new cljs.core.Keyword(null,"e","e",1013904343),p1__9734_SHARP_], null));
 }));
 
 //# sourceMappingURL=core.js.map

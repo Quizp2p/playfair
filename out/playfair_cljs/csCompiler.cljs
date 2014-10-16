@@ -194,18 +194,25 @@
 
 
 
-
+;;Should have if right or top or whatever only scale the x.
 (defmethod get-cs-fn :scale [{:keys [step-name shape-lookup node scale-val]}]
     (fn [canvas-state]
       (let [[shape-key shape-index] shape-lookup
-            shape-map ((shape-key canvas-state) shape-index)
-            {:keys [shape-name] :as shape} (assoc-in shape-map [:position-attrs] (sdc/nodes-to-attrs shape-key (:position-attrs shape-map)))
-                   ;;debug (debug/log scaled-canvas-state)
-                   ]
-                   (shape-name {:rect (assoc-in canvas-state [shape-key shape-index :position-attrs] (scale-rect node shape scale-val))
-                                :circle (assoc-in canvas-state [shape-key shape-index :position-attrs] (scale-circle node shape scale-val))
-                                :line (assoc-in canvas-state [shape-key shape-index :position-attrs] (scale-line node shape-map scale-val))}))))
-
+            {:keys [position-attrs]} ((shape-key canvas-state) shape-index)
+            around-node (sdc/get-opposite-node node)
+            around-x    (:x (around-node position-attrs))
+            around-y    (:y (around-node position-attrs))]
+            (assoc-in canvas-state [shape-key shape-index :position-attrs]
+                                     (into (hash-map)
+                                             (map (fn [[n-name {:keys [x y]}]]
+                                                        [n-name (if (= n-name around-node)
+                                                                      {:x x :y y}
+                                                                      {:x (if (some #(= % around-node) [:top-center-node :bottom-center-node])
+                                                                            x
+                                                                            (+ around-x (* scale-val (- x around-x))))
+                                                                       :y (if (some #(= % around-node) [:middle-right-node :middle-left-node])
+                                                                            y
+                                                                            (+ around-y (* scale-val (- y around-y))))})]) position-attrs))))))
 
 
 
@@ -225,21 +232,20 @@
 (defmethod get-cs-fn :move [{:keys [shape-lookup from-node to-node to-shape diffX diffY]}]
   (fn [canvas-state]
     (let [[shape-key index] shape-lookup
+
           {:keys [position-attrs shape-name]} ((shape-key canvas-state) index)
-                       [diffX diffY] (if to-node
-                                       (let [moved-node-pos (from-node position-attrs)
-                                             [to-shape-key to-index] to-shape
-                                             snapped-shape-pos (to-node (:position-attrs ((to-shape-key canvas-state) to-index)))]
-                                         [(- (:x snapped-shape-pos) (:x moved-node-pos))
-                                          (- (:y snapped-shape-pos) (:y moved-node-pos))])
-                                         [diffX diffY])
-                       shape-pos-attrs (sdc/nodes-to-attrs shape-name position-attrs)
-                       positions (reduce conj (map (fn [pos-attr]
-                                                       (cond (> (.indexOf (str pos-attr) "x") 0) {pos-attr (+ (pos-attr shape-pos-attrs) diffX)}
-                                                             (> (.indexOf (str pos-attr) "y") 0) {pos-attr (+ (pos-attr shape-pos-attrs) diffY)})) (sdc/get-pos-key shape-name)))]
-      (assoc-in canvas-state [shape-key index :position-attrs] (sdc/attrs-to-nodes shape-key (conj shape-pos-attrs positions))))))
 
+          [diffX diffY] (if to-node
+                            (let [moved-node-pos (from-node position-attrs)
+                                  [to-shape-key to-index] to-shape
+                                  snapped-shape-pos (to-node (:position-attrs ((to-shape-key canvas-state) to-index)))]
+                                 [(- (:x snapped-shape-pos) (:x moved-node-pos))
+                                  (- (:y snapped-shape-pos) (:y moved-node-pos))])
+                                 [diffX diffY])
 
+          positions (into (hash-map) (map (fn [[n-name {:keys [x y]}]]
+                                                    [n-name {:x (+ x diffX) :y (+ y diffY)}]) position-attrs))]
+      (assoc-in canvas-state [shape-key index :position-attrs] positions))))
 
 
 (defmethod get-cs-fn :for [step]
@@ -287,7 +293,8 @@
   (let [[shape-key index] shape-lookup
         add-text-data (fn [r-val] ["Rotate " (get-snap-name [shape-key index])
                                      " around " (get-snap-name [shape-key index])
-                                     "'s " (name (sdc/get-opposite-node node)) " by " r-val])]
+                                     "'s " (name (sdc/get-opposite-node node)) " by " r-val])
+        rotate-val (math/round rotate-val 2)]
 
   (if scrub?
       (add-text-data {:value rotate-val :step-key :rotate-val})
@@ -317,6 +324,7 @@
 (defmethod get-text :scale
   [{:keys [step-name shape-lookup node scale-val scrub?]}]
     (let [[shape-key shape-index] shape-lookup
+          scale-val (math/round scale-val 2)
           text ["Scale " (get-snap-name [shape-key shape-index]) " around "  (get-snap-name [shape-key shape-index]) "'s "
                  (name (sdc/get-opposite-node node)) " by " (if scrub? {:value scale-val :step-key :scale-val} scale-val)]]
        (if scrub?
