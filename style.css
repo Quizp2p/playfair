@@ -122,12 +122,20 @@ ul {
 }
 
 .container {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
   display: flex; /* or inline-flex */
   margin: 10px;
 
 }
 
 .container-around {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
   display: flex; /* or inline-flex */
   justify-content: space-around;
 }
