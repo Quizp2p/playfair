@@ -55,7 +55,6 @@
                                    :onMouseUp #(put! channels/global-chan {:e-type :mouseUp, :e (.-nativeEvent %), :reciever :global})} value))
 
 (defn make-scrub-text [step]
-  ;;(debug/log step)
   (reduce (fn [accum s]
             (if (map? s)
               (conj accum (make-span s))
@@ -63,13 +62,11 @@
 
 
 (defn get-scrub-step [[a-s1 a-s2] steps]
-  ;;(debug/log [a-s1 a-s2 steps])
   (if (number? a-s2)
     (steps a-s2)
     ((:for-steps (steps (a-s2 0))) (a-s2 2))))
 
 (defn make-scrub [{:keys [steps active-steps] :as as} owner]
-  ;;(debug/log as)
   (reify om/IRender
       (render [this]
               (if (> (count steps) 0)

@@ -1,7 +1,7 @@
 #Playfair
 ##A Tool for Drawing Dynamic Pictures
 
-Playfair is based on Bret Victors very cool talk [Drawing Dynamic Visualizations](https://vimeo.com/66085662).
+Playfair is based on Bret Victor's very cool talk [Drawing Dynamic Visualizations](https://vimeo.com/66085662).
 Right now it is a direct copy of the tool Bret presents, but I hope to make some improvements of my own.
 
 Be warned, this is a work in progress. It is buggy, incomplete, and sometimes laggy.

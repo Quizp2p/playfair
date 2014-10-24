@@ -57,7 +57,6 @@
 
 
 (defn attrs-to-nodes [shape-key pos-attrs]
-    ;;(debug/log shape-key)
     (shape-key {:rect (get-rect-node-points pos-attrs),
                 :circle (get-circle-node-points pos-attrs),
                 :line (get-line-node-points pos-attrs)}))

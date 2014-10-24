@@ -27,20 +27,19 @@
 (defn add-shape-events [r-shapes]
   (map (fn [shape]
          (assoc-in shape [:visual-attrs :onMouseDown] (fn [e]
-                                                        ;;(.log js/console e)
                                                         nil))) r-shapes))
 
 
 (defn render-app [app-state owner]
-  (debug/log app-state)
   (reify
     om/IRender
     (render [this]
             (let [steps (asc/app-state-to-steps app-state)]
             (dom/div #js {:className "proper-height"}
-              (dom/div #js {:className "container"}
-                       (dom/svg #js {:width (/ (s-data/canvas-size 0) 6) :height (/ (s-data/canvas-size 1) 6)})
-                       (dom/button #js {:id "screenButton"} "+"))
+
+                     ;;(dom/div #js {:className "container"}
+                     ;;  (dom/svg #js {:width (/ (s-data/canvas-size 0) 6) :height (/ (s-data/canvas-size 1) 6)})
+                     ;;  (dom/button #js {:id "screenButton"} "+"))
 
             (dom/div #js {:className "container-around"}
 
@@ -54,7 +53,6 @@
                      (om/build scrub/make-scrub app-state)
                        (let [last-state (-> steps last asc/get-last-state)
                              second-last-state (-> steps g/safe-pop last asc/get-last-state)]
-                         ;;(debug/log last-state)
                          (apply dom/svg #js {:onMouseMove #(put! channels/canvas-chan {:e-type :mouseMove, :e (.-nativeEvent %), :reciever :canvas, :second-last-state second-last-state})
                                              :onMouseDown #(put! channels/canvas-chan {:e-type :mouseDown, :e (.-nativeEvent %), :reciever :canvas, :second-last-state second-last-state})
                                              :onMouseUp #(put! channels/canvas-chan {:e-type :mouseUp, :e (.-nativeEvent %), :reciever :canvas, :second-last-state second-last-state})

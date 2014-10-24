@@ -125,7 +125,6 @@
                     {:x (* (math/cos radian) r) :y (* (math/sin radian) r)})))
 
 (defn snap [cs node s-lookup]
- (debug/log [cs node s-lookup])
  (let [{:keys [x y]} (cond
                        (= :canvas s-lookup) (if (vector? node)
                                               (glomp :rect s-data/canvas-nodes (node 1) )

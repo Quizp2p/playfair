@@ -76,7 +76,6 @@
 
 
 (defn handle-key-event [app [press-type event]]
-  ;;(debug/log (.-keyCode event))
   (let [keyCode (.-keyCode event)
         metaKey (.-metaKey event)
         shiftKey (.-shiftKey event)
